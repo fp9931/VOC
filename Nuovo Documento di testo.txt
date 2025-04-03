@@ -1,0 +1,262 @@
+phonationA
+CT001_phonationA
+CT004_phonationA
+No speech detected
+CT010_phonationA
+CT013_phonationA
+No speech detected
+CT014_phonationA
+CT015_phonationA
+CT018_phonationA
+CT019_phonationA
+CT020_phonationA
+CT021_phonationA
+No speech detected
+CT022_phonationA
+CT023_phonationA
+No speech detected
+CT026_phonationA
+CT027_phonationA
+CT028_phonationA
+CT029_phonationA
+CT030_phonationA
+No speech detected
+CT033_phonationA
+CT035_phonationA
+CT037_phonationA
+No speech detected
+CT038_phonationA
+No speech detected
+CT039_phonationA
+No speech detected
+CT040_phonationA
+No speech detected
+CT041_phonationA
+CT043_phonationA
+CT044_phonationA
+No speech detected
+CT045_phonationA
+CT046_phonationA
+CT047_phonationA
+No speech detected
+CT048_phonationA
+CT049_phonationA
+CT050_phonationA
+CT051_phonationA
+No speech detected
+CT052_phonationA
+CT053_phonationA
+No speech detected
+CT054_phonationA
+No speech detected
+CT055_phonationA
+CT056_phonationA
+CT057_phonationA
+CT058_phonationA
+CT059_phonationA
+No speech detected
+CT060_phonationA
+No speech detected
+CT061_phonationA
+CT062_phonationA
+No speech detected
+CT063_phonationA
+CT064_phonationA
+CT065_phonationA
+No speech detected
+CT066_phonationA
+CT067_phonationA
+CT068_phonationA
+CT069_phonationA
+PZ001_phonationA
+PZ003_phonationA
+No speech detected
+PZ004_phonationA
+No speech detected
+PZ005_phonationA
+PZ006_phonationA
+PZ007_phonationA
+PZ008_phonationA
+PZ009_phonationA
+No speech detected
+PZ010_phonationA
+PZ011_phonationA
+PZ012_phonationA
+No speech detected
+PZ013_phonationA
+PZ014_phonationA
+PZ015_phonationA
+No speech detected
+PZ016_phonationA
+PZ017_phonationA
+No speech detected
+PZ018_phonationA
+No speech detected
+PZ019_phonationA
+PZ020_phonationA
+PZ021_phonationA
+No speech detected
+PZ022_phonationA
+PZ023_phonationA
+PZ024_phonationA   
+PZ025_phonationA
+PZ026_phonationA
+PZ028_phonationA
+No speech detected
+PZ029_phonationA
+PZ030_phonationA
+PZ031_phonationA
+No speech detected
+PZ032_phonationA
+PZ033_phonationA
+No speech detected
+PZ034_phonationA
+PZ035_phonationA
+PZ036_phonationA
+No speech detected
+PZ037_phonationA
+PZ039_phonationA
+No speech detected
+PZ040_phonationA
+No speech detected
+PZ041_phonationA
+PZ043_phonationA
+PZ044_phonationA
+PZ045_phonationA
+PZ048_phonationA
+PZ049_phonationA
+PZ050_phonationA
+No speech detected
+PZ051_phonationA
+No speech detected
+PZ052_phonationA
+PZ053_phonationA
+No speech detected
+PZ054_phonationA
+No speech detected
+PZ055_phonationA
+No speech detected
+PZ056_phonationA
+No speech detected
+PZ057_phonationA
+No speech detected
+PZ058_phonationA
+PZ059_phonationA
+PZ060_phonationA
+PZ061_phonationA
+No speech detected
+PZ062_phonationA
+No speech detected
+PZ063_phonationA
+No speech detected
+PZ064_phonationA
+PZ065_phonationA
+PZ066_phonationA
+No speech detected
+PZ067_phonationA
+PZ068_phonationA
+PZ069_phonationA
+PZ070_phonationA
+PZ071_phonationA
+PZ072_phonationA
+PZ073_phonationA
+PZ074_phonationA
+PZ077_phonationA
+PZ079_phonationA
+PZ080_phonationA
+PZ081_phonationA
+PZ082_phonationA
+PZ083_phonationA
+PZ084_phonationA
+PZ085_phonationA
+PZ087_phonationA
+PZ088_phonationA
+PZ089_phonationA
+PZ090_phonationA
+PZ091_phonationA
+PZ092_phonationA
+PZ094_phonationA
+No speech detected
+PZ095_phonationA
+PZ096_phonationA
+No speech detected
+PZ097_phonationA
+PZ098_phonationA
+PZ099_phonationA
+PZ100_phonationA
+PZ101_phonationA
+PZ102_phonationA
+PZ103_phonationA
+PZ104_phonationA
+PZ105_phonationA
+No speech detected
+PZ107_phonationA
+PZ108_phonationA
+No speech detected
+PZ109_phonationA
+PZ110_phonationA
+PZ111_phonationA
+PZ112_phonationA
+PZ114_phonationA
+PZ115_phonationA
+No speech detected
+
+
+phonationE
+CT001_phonationE
+CT004_phonationE
+CT010_phonationE
+CT013_phonationE
+No speech detected
+CT014_phonationE
+CT015_phonationE
+CT018_phonationE
+CT019_phonationE
+CT020_phonationE
+CT021_phonationE
+CT022_phonationE
+CT023_phonationE
+CT026_phonationE
+CT027_phonationE
+CT028_phonationE
+No speech detected
+CT029_phonationE
+CT030_phonationE
+No speech detected
+CT033_phonationE
+CT035_phonationE
+CT037_phonationE
+No speech detected
+CT038_phonationE
+No speech detected
+CT039_phonationE
+No speech detected
+CT040_phonationE
+No speech detected
+CT041_phonationE
+No speech detected
+CT043_phonationE
+CT044_phonationE
+No speech detected
+CT045_phonationE
+No speech detected
+CT046_phonationE
+CT047_phonationE
+No speech detected
+CT048_phonationE
+CT049_phonationE
+CT050_phonationE
+CT051_phonationE
+No speech detected
+CT052_phonationE
+CT053_phonationE
+No speech detected
+CT054_phonationE
+CT055_phonationE
+CT056_phonationE
+CT057_phonationE
+CT058_phonationE
+CT059_phonationE
+No speech detected
+CT060_phonationE
+CT061_phonationE
