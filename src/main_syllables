@@ -1,4 +1,3 @@
-from vosk import Model, KaldiRecognizer
 from parselmouth.praat import call
 import soundfile as sf
 import pandas as pd
@@ -7,7 +6,19 @@ import parselmouth
 import wave
 import json
 import os
+import librosa
+import scipy.signal
+from matplotlib import pyplot as plt
 
+
+def autocorrelation(x):
+    n = len(x)
+    variance = np.var(x)
+    mean = np.mean(x)
+    x = x - mean
+    r = np.correlate(x, x, mode='full')[-n:]
+    result = r / (variance * (np.arange(n, 0, -1)))
+    return result
 
 general_path = os.path.dirname(os.getcwd())
 data_path = os.path.join(general_path, 'Data')
@@ -20,7 +31,7 @@ info = pd.read_excel(info_path)
 sex = info['Sex'].values
 catergory = info['Category'].values
 
-timings_path = os.path.join(result_path, 'timings')
+timings_path = os.path.join(result_path, 'timings', 'Method1')
 
 f2_slope = []
 f1_mean = []
@@ -69,6 +80,37 @@ cat = []
 gender = []
 rep = []
 
+
+gender_all = []
+cat_all = []
+hnr_mean_all = []
+hnr_std_all = []
+hnr_min_all = []
+hnr_max_all = []
+shimmer_local_all = []
+shimmer_local_dB_all = []
+shimmer_apq3_all = []
+shimmer_apq5_all = []
+shimmer_apq11_all = []
+shimmer_dda_all = []
+jitter_local_all = []
+jitter_local_absolute_all = []
+jitter_rap_all = []
+jitter_ppq5_all = []
+jitter_ddp_all = []
+f0_mean_all = []
+f0_std_all = []
+f0_min_all = []
+f0_max_all = []
+f0_median_all = []
+f0_25_all = []
+f0_75_all = []
+
+vot_list = []
+
+
+feature_entire = pd.read_excel(os.path.join(result_path, 'syllables_entire.xlsx'))
+
 for folder in os.listdir(data_path):
     if folder.startswith('rhythm'):
         phonation_path = os.path.join(data_path, folder)
@@ -83,6 +125,8 @@ for folder in os.listdir(data_path):
 
             print(file[:-4])
 
+            y, sr = librosa.load(os.path.join(phonation_path, file), sr=None)
+
             wav_file = os.path.join(phonation_path, file)
             wf = wave.open(wav_file, "rb")
 
@@ -92,162 +136,299 @@ for folder in os.listdir(data_path):
             snd = parselmouth.Sound(wav_file)
             point_process = call(snd, "To PointProcess (periodic, cc)", min_freq, max_freq)
             pitch = call(snd, "To Pitch (cc)", 0.0, min_freq, 15, False, 0.03, 0.45, 0.01, 0.35, 0.14, max_freq)
+            harmonicity = call(snd, "To Harmonicity (cc)", 0.01, min_freq, 0.1, 4.5) #take mean, std, range
+            spectrum = call(snd, "To Spectrum")
+            cepstrum = call(spectrum, "To PowerCepstrum")
+
+            print(pitch.selected_array['frequency'])
+            print(pitch.selected_array['frequency'].shape)
+
+            # # Entire audio analysis
+            # # features to extract: the same extracted for single repetition
+
+            # gender_all.append(sex[i])
+            # cat_all.append(catergory[i])
             
+            # f0_mean_all.append(call(pitch, "Get mean", start_values[0], end_values[-1], "Hertz"))
+            # f0_std_all.append(call(pitch, "Get standard deviation", start_values[0], end_values[-1], "Hertz"))
+            # f0_min_all.append(call(pitch, "Get minimum", start_values[0], end_values[-1], "Hertz", "parabolic"))
+            # f0_max_all.append(call(pitch, "Get maximum", start_values[0], end_values[-1], "Hertz", "parabolic"))
+            # f0_median_all.append(call(pitch, "Get quantile", start_values[0], end_values[-1], 0.5, "Hertz"))
+            # f0_25_all.append(call(pitch, "Get quantile", start_values[0], end_values[-1], 0.25, "Hertz"))
+            # f0_75_all.append(call(pitch, "Get quantile", start_values[0], end_values[-1], 0.75, "Hertz"))
+
+            # jitter_local_all.append(call(point_process, "Get jitter (local)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3))
+            # jitter_local_absolute_all.append(call(point_process, "Get jitter (local, absolute)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3))
+            # jitter_rap_all.append(call(point_process, "Get jitter (rap)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3))
+            # jitter_ppq5_all.append(call(point_process, "Get jitter (ppq5)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3))
+            # jitter_ddp_all.append(call(point_process, "Get jitter (ddp)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3))
+
+            # # Shimmer metrics
+            # shimmer_local_all.append(call([snd,point_process], "Get shimmer (local)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3, 1.6))
+            # shimmer_local_dB_all.append(call([snd,point_process], "Get shimmer (local_dB)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3, 1.6))
+            # shimmer_apq3_all.append(call([snd,point_process], "Get shimmer (apq3)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3, 1.6))
+            # shimmer_apq5_all.append(call([snd,point_process], "Get shimmer (apq5)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3, 1.6))
+            # shimmer_apq11_all.append(call([snd,point_process], "Get shimmer (apq11)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3, 1.6))
+            # shimmer_dda_all.append(call([snd,point_process], "Get shimmer (dda)", start_values[0], end_values[-1], 0.0001, 1/min_freq, 1.3, 1.6))
+
+            # # Harmonicity metrics
+            # hnr_mean_all.append(call(harmonicity, "Get mean", start_values[0], end_values[-1])   )
+            # hnr_std_all.append(call(harmonicity, "Get standard deviation", start_values[0], end_values[-1]))
+            # hnr_min_all.append(call(harmonicity, "Get minimum", start_values[0], end_values[-1], 'parabolic'))
+            # hnr_max_all.append(call(harmonicity, "Get maximum", start_values[0], end_values[-1], 'parabolic'))
+
             for t in range(len(start_values)):
                 start = float(start_values[t])
                 end = float(end_values[t])
+                
+                # duration.append(end - start)
+                # rep.append(t+1)
+                # name.append(file[5:])
+                # task.append(folder[-2:])
+                # gender.append(sex[i])
+                # cat.append(catergory[i])
 
-                duration.append(end - start)
-                rep.append(t+1)
-                name.append(file[:-4])
-                task.append(folder[-2:-1])
-                gender.append(sex[i])
-                cat.append(catergory[i])
+                # # F0 metrics
+                # f0_mean.append(call(pitch, "Get mean", start, end, "Hertz"))
+                # f0_std.append(call(pitch, "Get standard deviation", start, end, "Hertz"))
+                # f0_min.append(call(pitch, "Get minimum", start, end, "Hertz", "parabolic"))
+                # f0_max.append(call(pitch, "Get maximum", start, end, "Hertz", "parabolic"))
+                # f0_median.append(call(pitch, "Get quantile", start, end, 0.5, "Hertz"))
+                # f0_25.append(call(pitch, "Get quantile", start, end, 0.25, "Hertz"))
+                # f0_75.append(call(pitch, "Get quantile", start, end, 0.75, "Hertz"))
 
-                # F0 metrics
-                f0_mean.append(call(pitch, "Get mean", start, end, "Hertz"))
-                f0_std.append(call(pitch, "Get standard deviation", start, end, "Hertz"))
-                f0_min.append(call(pitch, "Get minimum", start, end, "Hertz", "parabolic"))
-                f0_max.append(call(pitch, "Get maximum", start, end, "Hertz", "parabolic"))
-                f0_median.append(call(pitch, "Get quantile", start, end, 0.5, "Hertz"))
-                f0_25.append(call(pitch, "Get quantile", start, end, 0.25, "Hertz"))
-                f0_75.append(call(pitch, "Get quantile", start, end, 0.75, "Hertz"))
+                # # JItter metrics                             
+                # jitter_local.append(call(point_process, "Get jitter (local)", start, end, 0.0001, 1/min_freq, 1.3))
+                # jitter_local_absolute.append(call(point_process, "Get jitter (local, absolute)", start, end, 0.0001, 1/min_freq, 1.3))
+                # jitter_rap.append(call(point_process, "Get jitter (rap)", start, end, 0.0001, 1/min_freq, 1.3))
+                # jitter_ppq5.append(call(point_process, "Get jitter (ppq5)", start, end, 0.0001, 1/min_freq, 1.3))
+                # jitter_ddp.append(call(point_process, "Get jitter (ddp)", start, end, 0.0001, 1/min_freq, 1.3))
 
-                # JItter metrics                             
-                jitter_local.append(call(point_process, "Get jitter (local)", start, end, 0.0001, 1/min_freq, 1.3))
-                jitter_local_absolute.append(call(point_process, "Get jitter (local, absolute)", start, end, 0.0001, 1/min_freq, 1.3))
-                jitter_rap.append(call(point_process, "Get jitter (rap)", start, end, 0.0001, 1/min_freq, 1.3))
-                jitter_ppq5.append(call(point_process, "Get jitter (ppq5)", start, end, 0.0001, 1/min_freq, 1.3))
-                jitter_ddp.append(call(point_process, "Get jitter (ddp)", start, end, 0.0001, 1/min_freq, 1.3))
+                # # Shimmer metrics
+                # shimmer_local.append(call([snd,point_process], "Get shimmer (local)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
+                # shimmer_local_dB.append(call([snd,point_process], "Get shimmer (local_dB)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
+                # shimmer_apq3.append(call([snd,point_process], "Get shimmer (apq3)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
+                # shimmer_apq5.append(call([snd,point_process], "Get shimmer (apq5)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
+                # shimmer_apq11.append(call([snd,point_process], "Get shimmer (apq11)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
+                # shimmer_dda.append(call([snd,point_process], "Get shimmer (dda)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
 
-                # Shimmer metrics
-                shimmer_local.append(call([snd,point_process], "Get shimmer (local)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-                shimmer_local_dB.append(call([snd,point_process], "Get shimmer (local_dB)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-                shimmer_apq3.append(call([snd,point_process], "Get shimmer (apq3)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-                shimmer_apq5.append(call([snd,point_process], "Get shimmer (apq5)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-                shimmer_apq11.append(call([snd,point_process], "Get shimmer (apq11)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-                shimmer_dda.append(call([snd,point_process], "Get shimmer (dda)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-
-                # Harmonicity metrics
-                harmonicity = call(snd, "To Harmonicity (cc)", 0.01, min_freq, 0.1, 4.5) #take mean, std, range
-                hnr_mean.append(call(harmonicity, "Get mean", start, end)   )
-                hnr_std.append(call(harmonicity, "Get standard deviation", start, end))
-                hnr_min.append(call(harmonicity, "Get minimum", start, end, 'parabolic'))
-                hnr_max.append(call(harmonicity, "Get maximum", start, end, 'parabolic'))
+                # # Harmonicity metrics
+                # hnr_mean.append(call(harmonicity, "Get mean", start, end)   )
+                # hnr_std.append(call(harmonicity, "Get standard deviation", start, end))
+                # hnr_min.append(call(harmonicity, "Get minimum", start, end, 'parabolic'))
+                # hnr_max.append(call(harmonicity, "Get maximum", start, end, 'parabolic'))
                                 
-                # Cepstral Peak Prominence
-                spectrum = call(snd, "To Spectrum")
-                cepstrum = call(spectrum, "To PowerCepstrum")
-                cpp.append(call(cepstrum, "Get peak prominence", min_freq, max_freq, "parabolic", 0.001, 0.05, "Exponential decay", "Robust slow"))
-                cp.append(call(cepstrum, "Get peak", min_freq, max_freq, "parabolic"))
+                # # Cepstral Peak Prominence
+                # cpp.append(call(cepstrum, "Get peak prominence", min_freq, max_freq, "parabolic", 0.001, 0.05, "Exponential decay", "Robust slow"))
+                # cp.append(call(cepstrum, "Get peak", min_freq, max_freq, "parabolic"))
 
-                # Formants
-                formant_max = 5000 if sex[i] == 'M' else 5500
-                formant = call(snd, "To Formant (burg)", 0.0, 5.0, formant_max, 0.025, 50)
+                # # Formants
+                # formant_max = 5000 if sex[i] == 'M' else 5500
+                # formant = call(snd, "To Formant (burg)", 0.0, 5.0, formant_max, 0.025, 50)
                 
-                f1_mean.append(call(formant, "Get mean", 1, start, end, "Hertz"))
-                f2_mean.append(call(formant, "Get mean", 2,  start, end, "Hertz"))
-                f3_mean.append(call(formant, "Get mean", 3, start, end, "Hertz"))
-                f1_std.append(call(formant, "Get standard deviation", 1, start, end, "Hertz"))
-                f2_std.append(call(formant, "Get standard deviation", 2,  start, end, "Hertz"))
-                f3_std.append(call(formant, "Get standard deviation", 3, start, end, "Hertz"))
-                f1_median.append(call(formant, "Get quantile", 1, start, end, "Hertz", 0.50))
-                f2_median.append(call(formant, "Get quantile", 2,  start, end, "Hertz", 0.50))
-                f3_median.append(call(formant, "Get quantile", 3, start, end, "Hertz", 0.50))
-                f1_max.append(call(formant, "Get maximum", 1, start, end, "Hertz", "parabolic"))
-                f2_max.append(call(formant, "Get maximum", 2,  start, end, "Hertz", "parabolic"))
-                f3_max.append(call(formant, "Get maximum", 3, start, end, "Hertz", "parabolic"))
-                f1_min.append(call(formant, "Get minimum", 1, start, end, "Hertz", "parabolic"))
-                f2_min.append(call(formant, "Get minimum", 2,  start, end, "Hertz", "parabolic"))
-                f3_min.append(call(formant, "Get minimum", 3, start, end, "Hertz", "parabolic"))
+                # f1_mean.append(call(formant, "Get mean", 1, start, end, "Hertz"))
+                # f2_mean.append(call(formant, "Get mean", 2,  start, end, "Hertz"))
+                # f3_mean.append(call(formant, "Get mean", 3, start, end, "Hertz"))
+                # f1_std.append(call(formant, "Get standard deviation", 1, start, end, "Hertz"))
+                # f2_std.append(call(formant, "Get standard deviation", 2,  start, end, "Hertz"))
+                # f3_std.append(call(formant, "Get standard deviation", 3, start, end, "Hertz"))
+                # f1_median.append(call(formant, "Get quantile", 1, start, end, "Hertz", 0.50))
+                # f2_median.append(call(formant, "Get quantile", 2,  start, end, "Hertz", 0.50))
+                # f3_median.append(call(formant, "Get quantile", 3, start, end, "Hertz", 0.50))
+                # f1_max.append(call(formant, "Get maximum", 1, start, end, "Hertz", "parabolic"))
+                # f2_max.append(call(formant, "Get maximum", 2,  start, end, "Hertz", "parabolic"))
+                # f3_max.append(call(formant, "Get maximum", 3, start, end, "Hertz", "parabolic"))
+                # f1_min.append(call(formant, "Get minimum", 1, start, end, "Hertz", "parabolic"))
+                # f2_min.append(call(formant, "Get minimum", 2,  start, end, "Hertz", "parabolic"))
+                # f3_min.append(call(formant, "Get minimum", 3, start, end, "Hertz", "parabolic"))
 
+                # Extract voice onset time
+                segment = y[int(start*sr):int(end*sr)]
+                result = np.correlate(segment, segment, mode="full")
+                result = result[result.size // 2 :]
+                energy = librosa.feature.rms(y=segment, frame_length=512, hop_length=128)[0]
+                zcr = librosa.feature.zero_crossing_rate(segment, frame_length=512, hop_length=128)[0]
+                times = librosa.frames_to_samples(np.arange(len(energy)), hop_length=128)
 
-                # Slope of the second formant (Hz/sec) (https://doi.org/10.1121/1.5099163)
-                sampling_rate = 8000  # Hz
-                time_step = 20 / 1000  # 20 ms in seconds
-                threshold_hz = 20
-                times = np.arange(start, end, 1/sampling_rate)
-                f2_values = np.array([formant.get_value_at_time(2, t) for t in times])
+                for j in range(len(energy)-1):
+                    if energy[j] > np.mean(energy)*0.2 and zcr[j] >= np.mean(zcr)*0.2:
+                        if energy[j-1] < np.mean(energy)*0.2:
+                            burst_time = times[j]
+                            burst_onsets = burst_time
 
-                valid_idx = ~np.isnan(f2_values)
-                times, f2_values = times[valid_idx], f2_values[valid_idx]
-
-                onset, offset = None, None
-                for h in range(len(f2_values)):
-                    future_idx = int(h+time_step*sampling_rate)
-                    if future_idx < len(f2_values) and abs(f2_values[future_idx] - f2_values[h]) >= threshold_hz:
-                        onset = i
-                        break
+                # Find the peak of zcr after the burst
+                zcr_max = np.where(zcr == np.max(zcr))[0]
                 
-                if onset is not None:
-                    for j in range(onset, len(f2_values)):
-                        future_idx = int(j+time_step*sampling_rate)
-                        if future_idx >= len(f2_values) or abs(f2_values[future_idx] - f2_values[j]) < threshold_hz:
-                            offset = j
-                            break
+                            # for k in range(j+1, len(energy)):
+                            #     if energy[j] > np.mean(energy)*0.2 and zcr[j] < np.mean(zcr)*0.2:
+                            #         vowel_onset_time = times[j]
+                            #         vot = vowel_onset_time - burst_time
+                            #         if 0.01 < vot < 0.1:  # sanity check: 10–100 ms VOT
+                            #             vot_list.append((burst_time, vowel_onset_time, vot))
+                            #         break
+
+                print(len(zcr))
+                plt.figure()
+                plt.plot(result)
+                plt.axvline(x=burst_onsets, color='r', linestyle='--')
+                plt.show()
                 
-                if onset != offset:
-                    slope = (f2_values[offset] - f2_values[onset]) / (times[offset] - times[onset])
-                else:
-                    slope = None
-                
-                f2_slope.append(slope)
-            
-# Save all the features in an excel file
-features = pd.DataFrame({
-    'subjid': name,
-    'duration': duration,
-    'task': task,
-    'repetition': rep,
-    'category': cat,
-    'sex': gender,
-    'f0_mean': f0_mean,
-    'f0_std': f0_std,
-    'f0_min': f0_min,
-    'f0_max': f0_max,
-    'f0_median': f0_median,
-    'f0_25': f0_25,
-    'f0_75': f0_75,
-    'jitter_local': jitter_local,
-    'jitter_local_absolute': jitter_local_absolute,
-    'jitter_rap': jitter_rap,
-    'jitter_ppq5': jitter_ppq5,
-    'jitter_ddp': jitter_ddp,
-    'shimmer_local': shimmer_local,
-    'shimmer_local_dB': shimmer_local_dB,
-    'shimmer_apq3': shimmer_apq3,
-    'shimmer_apq5': shimmer_apq5,
-    'shimmer_apq11': shimmer_apq11,
-    'shimmer_dda': shimmer_dda,
-    'hnr_mean': hnr_mean,
-    'hnr_std': hnr_std,
-    'hnr_min': hnr_min,
-    'hnr_max': hnr_max,
-    'cpp': cpp,
-    'cp': cp,
-    'f1_mean': f1_mean,
-    'f2_mean': f2_mean,
-    'f3_mean': f3_mean,
-    'f1_std': f1_std,
-    'f2_std': f2_std,
-    'f3_std': f3_std,
-    'f1_median': f1_median,
-    'f2_median': f2_median,
-    'f3_median': f3_median,
-    'f1_max': f1_max,
-    'f2_max': f2_max,
-    'f3_max': f3_max,
-    'f1_min': f1_min,
-    'f2_min': f2_min,
-    'f3_min': f3_min,
-    'f2_slope': f2_slope
-})
+                # burst_signal = y[start_burst:end_burst]
+                # max_amp_db = 20 * np.log10(np.max(np.abs(burst_signal)))
+                # frequencies, spectrum = scipy.signal.welch(burst_signal, fs)
+                # mean_freq = np.sum(frequencies * spectrum) / np.sum(spectrum)
+                # variance_freq = np.sum((frequencies - mean_freq)**2 * spectrum) / np.sum(spectrum)
+                # peak_freq = frequencies[np.argmax(spectrum)]
+                # energy_burst = np.mean(burst_signal ** 2)
+                # energy_vowel = np.mean(vowel_onset_signal ** 2)
+                # energy_drop_db = 10 * np.log10(energy_burst / energy_vowel)
 
 
-features.to_excel(os.path.join(result_path, 'syllabels_features.xlsx'), index=False)
+
+                # # Estrarre il tempo del primo pitch diverso da zero e contare la differenza dallo start
+                # pitch_values = pitch.selected_array['frequency']
+                # for j in range(len(pitch_values)):
+                #     if pitch_values[j] > 0:
+                #         pitch_values[j] = 1
+
+                # plt.figure()
+                # plt.plot(pitch.xs(), pitch_values)
+                # plt.show()
+
+
+            break
+        break
+
+
+                # frame_length = int(0.01 * sr)  # 10 ms
+                # hop_length = int(0.0025 * sr) # 2.5 ms
+                # energy = np.array([np.sum(np.square(segment[i:i+frame_length])) for i in range(0, len(segment)-frame_length, hop_length)])
+
+                # burst_idx = np.argmax(np.diff(energy))
+                # burst_time = burst_idx * hop_length / sr
+
+                # zcr = librosa.feature.zero_crossing_rate(segment, frame_length=frame_length, hop_length=hop_length)[0]
+                # zcr_threshold = 0.1
+                # voicing_candidates = np.where(zcr < zcr_threshold)[0]
+                
+                # voiceing_idx = voicing_candidates[voicing_candidates > burst_idx]
+                # if len(voiceing_idx) > 0:
+                #     voice_onset_idx = voiceing_idx[0]
+                #     voice_onset_time = voice_onset_idx * hop_length / sr
+                #     vot = voice_onset_time - burst_time
+                # else:
+                #     vot = np.nan
+                
+                # vot_list.append(vot)
+
+                # # Slope of the second formant (Hz/sec) (https://doi.org/10.1121/1.5099163)
+                # sampling_rate = 8000  # Hz
+                # time_step = 20 / 1000  # 20 ms in seconds
+                # threshold_hz = 20
+                # times = np.arange(start, end, 1/sampling_rate)
+                # f2_values = np.array([formant.get_value_at_time(2, t) for t in times])
+
+                # valid_idx = ~np.isnan(f2_values)
+                # times, f2_values = times[valid_idx], f2_values[valid_idx]
+
+                # onset, offset = None, None
+                # for h in range(len(f2_values)):
+                #     future_idx = int(h+time_step*sampling_rate)
+                #     if future_idx < len(f2_values) and abs(f2_values[future_idx] - f2_values[h]) >= threshold_hz:
+                #         onset = i
+                #         break
+                
+                # if onset is not None:
+                #     for j in range(onset, len(f2_values)):
+                #         future_idx = int(j+time_step*sampling_rate)
+                #         if future_idx >= len(f2_values) or abs(f2_values[future_idx] - f2_values[j]) < threshold_hz:
+                #             offset = j
+                #             break
+                
+                # if onset != offset:
+                #     slope = (f2_values[offset] - f2_values[onset]) / (times[offset] - times[onset])
+                # else:
+                #     slope = None
+                
+                # f2_slope.append(slope)
+          
+# # Save all the features in an excel file
+# features = pd.DataFrame({
+#     'subjid': name,
+#     'duration': duration,
+#     'task': task,
+#     'repetition': rep,
+#     'category': cat,
+#     'sex': gender,
+#     'f0_mean': f0_mean,
+#     'f0_std': f0_std,
+#     'f0_min': f0_min,
+#     'f0_max': f0_max,
+#     'f0_median': f0_median,
+#     'f0_25': f0_25,
+#     'f0_75': f0_75,
+#     'jitter_local': jitter_local,
+#     'jitter_local_absolute': jitter_local_absolute,
+#     'jitter_rap': jitter_rap,
+#     'jitter_ppq5': jitter_ppq5,
+#     'jitter_ddp': jitter_ddp,
+#     'shimmer_local': shimmer_local,
+#     'shimmer_local_dB': shimmer_local_dB,
+#     'shimmer_apq3': shimmer_apq3,
+#     'shimmer_apq5': shimmer_apq5,
+#     'shimmer_apq11': shimmer_apq11,
+#     'shimmer_dda': shimmer_dda,
+#     'hnr_mean': hnr_mean,
+#     'hnr_std': hnr_std,
+#     'hnr_min': hnr_min,
+#     'hnr_max': hnr_max,
+#     'cpp': cpp,
+#     'cp': cp,
+#     'f1_mean': f1_mean,
+#     'f2_mean': f2_mean,
+#     'f3_mean': f3_mean,
+#     'f1_std': f1_std,
+#     'f2_std': f2_std,
+#     'f3_std': f3_std,
+#     'f1_median': f1_median,
+#     'f2_median': f2_median,
+#     'f3_median': f3_median,
+#     'f1_max': f1_max,
+#     'f2_max': f2_max,
+#     'f3_max': f3_max,
+#     'f1_min': f1_min,
+#     'f2_min': f2_min,
+#     'f3_min': f3_min,
+#     'f2_slope': f2_slope
+# })
+
+
+# features.to_excel(os.path.join(result_path, 'syllabels_features.xlsx'), index=False)
     
      
+# feature_entire['category'] = cat_all    
+# feature_entire['sex'] = gender_all 
+# feature_entire['f0_mean'] = f0_mean_all 
+# feature_entire['f0_std'] = f0_std_all 
+# feature_entire['f0_min'] = f0_min_all 
+# feature_entire['f0_median'] = f0_median_all   
+# feature_entire['f0_25'] = f0_25_all  
+# feature_entire['f0_75'] = f0_75_all 
+# feature_entire['jitter_local'] = jitter_local_all 
+# feature_entire['jitter_local_absolute'] = jitter_local_absolute_all 
+# feature_entire['jitter_rap'] = jitter_rap_all 
+# feature_entire['jitter_ppq5'] = jitter_ppq5_all
+# feature_entire['jitter_ddpl'] = jitter_ddp_all 
+# feature_entire['shimmmer_local'] = shimmer_local_all   
+# feature_entire['shimmer_local_dB'] = shimmer_local_dB_all  
+# feature_entire['shimmer_apq3'] = shimmer_apq3_all 
+# feature_entire['shimmer_apq5'] = shimmer_apq5_all 
+# feature_entire['shimmer_apq11'] = shimmer_apq11_all 
+# feature_entire['shimmer_dds'] = shimmer_dda_all 
+# feature_entire['hnr_mean'] = hnr_mean_all
+# feature_entire['hnr_std'] = hnr_std_all 
+# feature_entire['hnr_min'] = hnr_min_all   
+# feature_entire['hnr_max'] = hnr_max_all
 
-
-
+# feature_entire.to_excel(os.path.join(result_path, 'syllabels_features_entire.xlsx'), index=False)
 

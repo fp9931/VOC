@@ -33,6 +33,9 @@ for f=1:length(folders_clean)-3
         fc = [50, 1000]/(fs/2);
         [b,a] = butter(order,fc,"bandpass");
         filtered_y = filtfilt(b,a,y);
+
+        filtered_y = filtered_y-mean(filtered_y);
+        filtered_y = filtered_y/max(filtered_y);
     
         y_abs = abs(filtered_y);
         lp_cutoff = 10 / (fs/2);
@@ -97,7 +100,7 @@ for f=1:length(folders_clean)-3
     
     end
      
-    tab = table(names,times(:,1)./8000,times(:,2)./8000,'VariableNames',column_name);
-    writetable(tab,fullfile(timings_path,[folders_clean(f).name,'.xlsx']))
+    % tab = table(names,times(:,1)./fs,times(:,2)./fs,'VariableNames',column_name);
+    % writetable(tab,fullfile(timings_path,[folders_clean(f).name,'.xlsx']))
 
 end

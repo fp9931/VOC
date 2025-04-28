@@ -78,7 +78,7 @@ for folder in os.listdir(data_path):
 
         for i, file in enumerate(os.listdir(phonation_path)):
             print(file[:-4])
-            name.append(file[:-4])
+            name.append(file[5:])
             task.append(folder[-1])
             gender.append(sex[i])
             cat.append(catergory[i])
