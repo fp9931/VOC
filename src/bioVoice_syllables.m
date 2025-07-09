@@ -8,13 +8,13 @@ pathParts = strsplit(currentPath, filesep);
 numParts = numel(pathParts);
 newPathParts = pathParts(1:numParts-1);
 rootPath = strjoin(newPathParts, filesep);
-timings_path = fullfile(rootPath, '\Results\timings');
+timings_path = fullfile(rootPath, '\Results\timings\test13_05');
 
 data_path = fullfile(rootPath, '\Data');
 folders = dir(data_path);
 folders_clean = folders(3:end);
 
-for f=6:length(folders_clean)
+for f=8:length(folders_clean)
 
     phonation_path = fullfile(data_path, folders_clean(f).name);
     files = dir(fullfile(phonation_path, '*.wav'));
@@ -103,8 +103,8 @@ for f=6:length(folders_clean)
         % % yline(tu, 'b')
         end
 
-        % tab = table(start_time./fs,stop_time./fs,'VariableNames',column_name);
-        % writetable(tab,fullfile(timings_path,folders_clean(f).name,[name,'.xlsx']))
+        tab = table(start_time./fs,stop_time./fs,'VariableNames',column_name);
+        writetable(tab,fullfile(timings_path,folders_clean(f).name,[name,'.xlsx']))
        
     end
 

@@ -7,6 +7,8 @@ import parselmouth
 import wave
 import json
 import os
+import librosa
+from scipy.fftpack import dct
 
 
 general_path = os.path.dirname(os.getcwd())
@@ -67,14 +69,27 @@ task = []
 name = []
 cat = []
 gender = []
+mfcc_0 = []
+mfcc_0 = []
+mfcc_1 = []
+mfcc_2 = []
+mfcc_3 = []
+mfcc_4 = []
+mfcc_5 = []
+mfcc_6 = []
+mfcc_7 = []
+mfcc_8 = []
+mfcc_9 = []
+mfcc_10 = []
+mfcc_11 = []
+mfcc_12 = []
 
+count = 0
 for folder in os.listdir(data_path):
     if folder.startswith('phonation'):
         phonation_path = os.path.join(data_path, folder)
         timings = os.path.join(timings_path, folder+'.xlsx')
         timings_table = pd.read_excel(timings)
-
-        print(folder)
 
         for i, file in enumerate(os.listdir(phonation_path)):
             print(file[:-4])
@@ -87,8 +102,8 @@ for folder in os.listdir(data_path):
             wf = wave.open(wav_file, "rb")
 
             ind = np.where(timings_table['ID'] == file[:5])[0]
-            start = float(timings_table['Start'].values[ind])
-            end = float(timings_table['Stop'].values[ind])
+            start = timings_table['Start'].values[ind][0]
+            end = timings_table['Stop'].values[ind][0]
 
             min_freq = 50 if sex[i] == 'M' else 100
             max_freq = 600 if sex[i] == 'M' else 800
@@ -160,98 +175,163 @@ for folder in os.listdir(data_path):
             f2_min.append(call(formant, "Get minimum", 2,  start, end, "Hertz", "parabolic"))
             f3_min.append(call(formant, "Get minimum", 3, start, end, "Hertz", "parabolic"))
 
+            # MFCC features
+            audio, sr = librosa.load(wav_file, sr=None)
+            y = audio[int(start*sr):int(end*sr)]
+            pre_emphasis = 0.97
+            y_preemphasized = np.append(y[0], y[1:] - pre_emphasis * y[:-1])
+            y_preemphasized *= np.hamming(len(y_preemphasized)) 
 
-            # Slope of the second formant (Hz/sec) (https://doi.org/10.1121/1.5099163)
-            '''
-            "The actual slope 
-            computations were determined by a rule that defined onset 
-            and offset of the transitional segment. The onset of the segment was defined as the first point in time from which 
-            a 20 ms increment was accompanied by at least a 20-Hz change; 
-            the offset of the segment was defined as a succeeding point in 
-            time from which a 20-ms increment did not have a corresponding 20-Hz or greater change"
-            '''
-
-            sampling_rate = 8000  # Hz
-            time_step = 20 / 1000  # 20 ms in seconds
-            threshold_hz = 20
-            times = np.arange(start, end, 1/sampling_rate)
-            f2_values = np.array([formant.get_value_at_time(2, t) for t in times])
-
-            valid_idx = ~np.isnan(f2_values)
-            times, f2_values = times[valid_idx], f2_values[valid_idx]
-
-            onset, offset = None, None
-            for i in range(len(f2_values)):
-                future_idx = int(i+time_step*sampling_rate)
-                if future_idx < len(f2_values) and abs(f2_values[future_idx] - f2_values[i]) >= threshold_hz:
-                    onset = i
-                    break
+            NFFT = 256
+            mag = np.absolute(np.fft.rfft(y_preemphasized, NFFT)) 
+            pow = ((1.0 / NFFT) * ((mag) ** 2))  # Power Spectrum
             
-            if onset is not None:
-                for j in range(onset, len(f2_values)):
-                    future_idx = int(j+time_step*sampling_rate)
-                    if future_idx >= len(f2_values) or abs(f2_values[future_idx] - f2_values[j]) < threshold_hz:
-                        offset = j
-                        break
+            nfilt = 40
+            low_freq = 0
+            high_freq = sr / 2
+            low_mel = 1125 * np.log(1 + low_freq / 700)  # Convert Hz to Mel
+            high_mel = 1125 * np.log(1 + high_freq / 700)
+            mel_points = np.linspace(low_mel, high_mel, nfilt + 2)  # Equally spaced in Mel scale
+            hz_points = 700 * (np.exp(mel_points / 2595) - 1)  # Convert Mel to Hz
+            bin = np.floor((NFFT + 1) * hz_points / sr).astype(int)  # Convert to bin numbers
+
+            fbank = np.zeros((nfilt, int(np.floor(NFFT / 2 + 1))))
+            for m in range(1, nfilt + 1):
+                f_m_minus = int(bin[m - 1])   # left
+                f_m = int(bin[m])             # center
+                f_m_plus = int(bin[m + 1])    # right
+
+                for k in range(f_m_minus, f_m):
+                    fbank[m - 1, k] = (k - bin[m - 1]) / (bin[m] - bin[m - 1])
+                for k in range(f_m, f_m_plus):
+                    fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
+
+            mel_spec = np.dot(pow, fbank.T)
+            mel_spec = np.where(mel_spec == 0, np.finfo(float).eps, mel_spec)  # Numerical stability
+            log_mel_spec = np.log(mel_spec)
+
+            mfcc = dct(log_mel_spec)[:12]
+
+            low_energy = np.log(np.sum(pow) if np.sum(pow) > 0 else np.finfo(float).eps)
+            mfcc_0.append(mfcc[0])
+            mfcc_1.append(mfcc[1])
+            mfcc_2.append(mfcc[2])
+            mfcc_3.append(mfcc[3])
+            mfcc_4.append(mfcc[4])
+            mfcc_5.append(mfcc[5])
+            mfcc_6.append(mfcc[6])
+            mfcc_7.append(mfcc[7])
+            mfcc_8.append(mfcc[8])
+            mfcc_9.append(mfcc[9])
+            mfcc_10.append(mfcc[10])
+            mfcc_11.append(mfcc[11])
+            mfcc_12.append(low_energy)
+
+            # # Slope of the second formant (Hz/sec) (https://doi.org/10.1121/1.5099163)
+            # '''
+            # "The actual slope 
+            # computations were determined by a rule that defined onset 
+            # and offset of the transitional segment. The onset of the segment was defined as the first point in time from which 
+            # a 20 ms increment was accompanied by at least a 20-Hz change; 
+            # the offset of the segment was defined as a succeeding point in 
+            # time from which a 20-ms increment did not have a corresponding 20-Hz or greater change"
+            # '''
+
+            # sampling_rate = 8000  # Hz
+            # time_step = 20 / 1000  # 20 ms in seconds
+            # threshold_hz = 20
+            # times = np.arange(start, end, 1/sampling_rate)
+            # f2_values = np.array([formant.get_value_at_time(2, t) for t in times])
+
+            # valid_idx = ~np.isnan(f2_values)
+            # times, f2_values = times[valid_idx], f2_values[valid_idx]
+
+            # onset, offset = None, None
+            # for i in range(len(f2_values)):
+            #     future_idx = int(i+time_step*sampling_rate)
+            #     if future_idx < len(f2_values) and abs(f2_values[future_idx] - f2_values[i]) >= threshold_hz:
+            #         onset = i
+            #         break
             
-            if onset != offset:
-                slope = (f2_values[offset] - f2_values[onset]) / (times[offset] - times[onset])
-            else:
-                slope = None
+            # if onset is not None:
+            #     for j in range(onset, len(f2_values)):
+            #         future_idx = int(j+time_step*sampling_rate)
+            #         if future_idx >= len(f2_values) or abs(f2_values[future_idx] - f2_values[j]) < threshold_hz:
+            #             offset = j
+            #             break
             
-            f2_slope.append(slope)
+            # if onset != offset:
+            #     slope = (f2_values[offset] - f2_values[onset]) / (times[offset] - times[onset])
+            # else:
+            #     slope = None
             
-# Save all the features in an excel file
-features = pd.DataFrame({
-    'subjid': name,
-    'duration': duration,
-    'task': task,
-    'category': cat,
-    'sex': gender,
-    'f0_mean': f0_mean,
-    'f0_std': f0_std,
-    'f0_min': f0_min,
-    'f0_max': f0_max,
-    'f0_median': f0_median,
-    'f0_25': f0_25,
-    'f0_75': f0_75,
-    'jitter_local': jitter_local,
-    'jitter_local_absolute': jitter_local_absolute,
-    'jitter_rap': jitter_rap,
-    'jitter_ppq5': jitter_ppq5,
-    'jitter_ddp': jitter_ddp,
-    'shimmer_local': shimmer_local,
-    'shimmer_local_dB': shimmer_local_dB,
-    'shimmer_apq3': shimmer_apq3,
-    'shimmer_apq5': shimmer_apq5,
-    'shimmer_apq11': shimmer_apq11,
-    'shimmer_dda': shimmer_dda,
-    'hnr_mean': hnr_mean,
-    'hnr_std': hnr_std,
-    'hnr_min': hnr_min,
-    'hnr_max': hnr_max,
-    'cpp': cpp,
-    'cp': cp,
-    'f1_mean': f1_mean,
-    'f2_mean': f2_mean,
-    'f3_mean': f3_mean,
-    'f1_std': f1_std,
-    'f2_std': f2_std,
-    'f3_std': f3_std,
-    'f1_median': f1_median,
-    'f2_median': f2_median,
-    'f3_median': f3_median,
-    'f1_max': f1_max,
-    'f2_max': f2_max,
-    'f3_max': f3_max,
-    'f1_min': f1_min,
-    'f2_min': f2_min,
-    'f3_min': f3_min,
-    'f2_slope': f2_slope
-})
+            # f2_slope.append(slope)
+            
+            # Save all the features in an excel file
+            features = pd.DataFrame({
+                'subjid': name,
+                'duration': duration,
+                'task': task,
+                'category': cat,
+                'sex': gender,
+                'f0_mean': f0_mean,
+                'f0_std': f0_std,
+                'f0_min': f0_min,
+                'f0_max': f0_max,
+                'f0_median': f0_median,
+                'f0_25': f0_25,
+                'f0_75': f0_75,
+                'jitter_local': jitter_local,
+                'jitter_local_absolute': jitter_local_absolute,
+                'jitter_rap': jitter_rap,
+                'jitter_ppq5': jitter_ppq5,
+                'jitter_ddp': jitter_ddp,
+                'shimmer_local': shimmer_local,
+                'shimmer_local_dB': shimmer_local_dB,
+                'shimmer_apq3': shimmer_apq3,
+                'shimmer_apq5': shimmer_apq5,
+                'shimmer_apq11': shimmer_apq11,
+                'shimmer_dda': shimmer_dda,
+                'hnr_mean': hnr_mean,
+                'hnr_std': hnr_std,
+                'hnr_min': hnr_min,
+                'hnr_max': hnr_max,
+                'cpp': cpp,
+                'cp': cp,
+                'f1_mean': f1_mean,
+                'f2_mean': f2_mean,
+                'f3_mean': f3_mean,
+                'f1_std': f1_std,
+                'f2_std': f2_std,
+                'f3_std': f3_std,
+                'f1_median': f1_median,
+                'f2_median': f2_median,
+                'f3_median': f3_median,
+                'f1_max': f1_max,
+                'f2_max': f2_max,
+                'f3_max': f3_max,
+                'f1_min': f1_min,
+                'f2_min': f2_min,
+                'f3_min': f3_min,
+                # 'f2_slope': f2_slope
+                'mfcc_0': mfcc_0,
+                'mfcc_1': mfcc_1,
+                'mfcc_2': mfcc_2,
+                'mfcc_3': mfcc_3,
+                'mfcc_4': mfcc_4,
+                'mfcc_5': mfcc_5,
+                'mfcc_6': mfcc_6,
+                'mfcc_7': mfcc_7,
+                'mfcc_8': mfcc_8,
+                'mfcc_9': mfcc_9,
+                'mfcc_10': mfcc_10,
+                'mfcc_11': mfcc_11,
+                'mfcc_12': mfcc_12
+            })
 
 
-features.to_excel(os.path.join(result_path, 'phonation_features.xlsx'), index=False)
+            features.to_excel(os.path.join(result_path, 'phonation_features_fix.xlsx'), index=False)
+
     
      
 

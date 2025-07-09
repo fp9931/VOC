@@ -1,25 +1,25 @@
-Analisi:
-1. Classificazione --> swallowing normal/impaired (multiclasse per score swallowing impaired/normal)
-2. Regressione sulla PUMNS (da 0 a 4) --> chiedere ai neurologi
+Info Dataset:
 
-Classificatori:
-1. XGBoost
-2. SVM
-3. … 
+Vocali:
+A --> 153
+E --> 153
+I --> 153
+O --> 153
+U --> 153
 
-Regressori:
+Sillabe:
+17488 (da controllare)
+	KA --> 5046 (3154 PZ)
+	PA --> 6278 (3816 PZ)
+	TA --> 6164 (3738 PZ)
 
-Iperparamentri:
-1. XGBoost: … 
-2. … 
 
---> controllare con il PUMNS
---> scegliere quale analisi fare e capire quali features utilizzare --> 1 modello per sillabe e un modello per vocali (considerando tutto insieme e aggiungere task come feature)
---> Decidere gli split da fare.
---> primo split da testare quello del poster da ripetere 5 volte per avere un buon bilanciamento tra i vari test set così che ognuno e incluso nel test. 
---> Fare split fisso da ripetere 5/6 volte per maggiore robustezza dei risultati
---> Riperdere lo stesso split e confrontare singola ripetizione vs. intero audio
---> Late fusion dei classificatori (addestrare i classificatori con una LOSS che dia peso maggiore a task che siano più accurati) (poi prendere la media o il voto di maggioranza) 
+--> controllare con il PUMNS:
+	 •	the PUMNS bulbar subscore (PUMNS_BulbarSubscore) ranging from 0 to 4, where 0 corresponds to 
+normal and 4 widespread/severe upper motor neuron involvement in the examined district;
+	 •	the PUMNS upper limbs subscore (PUMNS_UpperLimbsSubscore) ranging from 0 to 14, where 0 corresponds to normal and 14 widespread/severe upper motor neuron involvement in the examined district;
+	 •	the PUMNS lower limbs subscore (PUMNS_LowerLimbsSubscore) ranging from 0 to 14, where 0 corresponds to normal and 14 widespread/severe upper motor neuron involvement in the examined district;
+ 
 
 
 Info dati:
@@ -78,3 +78,22 @@ Info dati:
 15. PUMNS lower limb subscore:
 	1. Bulbar --> 8.1 (mean)
 	2. Spinal --> 5.80 (mean)
+
+
+
+
+Analisi:
+1. Classificazione --> swallowing normal/impaired (multiclasse per score swallowing impaired/normal)
+2. Regressione sulla PUMNS
+
+Classificatori:
+1. XGBoost
+2. SVM
+3. … 
+
+Regressori:
+
+Iperparamentri:
+1. XGBoost: … 
+2. … 
+
