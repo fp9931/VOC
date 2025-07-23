@@ -62,12 +62,12 @@ def prepare_data(df, y):
 
     return X_df, X_train, X_test, y_train, y_test
 
-def classification_function(model, parameters, X_train, X_test, y_train, y_test, model_name, feature_selection, features):
+def classification_function(model, parameters, X_train, X_test, y_train, y_test, model_name, feature_selection, features, name_file):
 
-    global results
+    global results, results_path
 
     # Train-validation split and hyperparameter tuning
-    train_test_split = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
+    train_test_split = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
     grid_search = GridSearchCV(model, parameters, cv=train_test_split, scoring='f1', n_jobs=-1)
     grid_search.fit(X_train, y_train)
 
@@ -101,7 +101,10 @@ def classification_function(model, parameters, X_train, X_test, y_train, y_test,
     results['Sensitivity'].append(sensitivity)
     results['Validation'].append(best_score)
 
-def classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features):
+    results_df = pd.DataFrame(results)
+    results_df.to_excel(os.path.join(results_path, name_file), index=False)
+
+def classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features, name_file):
     # SVM Classifier
 
     model = SVC()
@@ -112,7 +115,7 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
         'gamma': [0.0001, 0.001, 0.01, 0.1, 1],
         'degree': [2, 3, 4],
     }
-    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features)
+    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file)
 
     # Random Forest Classifier
 
@@ -124,7 +127,7 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
         'min_samples_split': [2, 5, 10],
         'min_samples_leaf': [1, 2, 4],
     }
-    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features)
+    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file)
 
 
     # XGBoost Classifier
@@ -137,7 +140,7 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
         'learning_rate': [0.01, 0.1, 0.2, 0.5, 0.7, 1.0],
         'subsample': [0.1, 0.2, 0.3, 0.5, 0.7, 1.0],
     }
-    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features)
+    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file)
 
     # KNN classifier
 
@@ -148,23 +151,23 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
         'weights': ['uniform', 'distance'],
         'metric': ['euclidean', 'manhattan', 'minkowski'],
     }
-    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features)
+    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file)
 
     # MLP Classifier
 
     model = MLPClassifier(random_state=42, max_iter=1000, early_stopping=True, n_iter_no_change=10)
     model_name = "MLP"
     parameters = {
-        'hidden_layer_sizes': [(32,), (16,), (8), (32, 16), (16, 8)],
+        'hidden_layer_sizes': [(32,), (16,), (8,), (32, 16), (16, 8)],
         'activation': ['relu', 'tanh', 'sigmoid'],
         'alpha': [0.0001, 0.001],
         'learning_rate': ['constant', 'adaptive'],
     }
-    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features)
+    classification_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file)
 
-def main_classification(X_df, X_train, X_test, y_train, y_test):
+def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
 
-    #################################################### 5 features per syllable/vowel ##########################################################
+    ##################################################### 5 features per syllable/vowel ##########################################################
 
     features_to_select = []
     task = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
@@ -185,9 +188,9 @@ def main_classification(X_df, X_train, X_test, y_train, y_test):
     X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in features_to_select]]
     
     feature_selection = "5"
-    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select)
+    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file)
 
-    #################################################### 10% features per syllable/vowel ##########################################################
+    # #################################################### 10% features per syllable/vowel ##########################################################
 
     X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
     y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
@@ -197,7 +200,7 @@ def main_classification(X_df, X_train, X_test, y_train, y_test):
     X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
 
     feature_selection = "10%"
-    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features)
+    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
 
     #################################################### Free features per syllable/vowel ##########################################################
 
@@ -213,7 +216,7 @@ def main_classification(X_df, X_train, X_test, y_train, y_test):
         X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in feature_set]]
         
         feature_selection = "Free"
-        classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, feature_set)
+        classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, feature_set, name_file)
 
 # Main
 if __name__ == "__main__":
@@ -234,6 +237,7 @@ if __name__ == "__main__":
     chance_level = max(Counter(y).values()) / len(y)
     print(f"Chance level: {chance_level:.2f}")
 
+    # With MFCCs
     results = {
         'Technique': [],
         'Model': [],
@@ -252,18 +256,15 @@ if __name__ == "__main__":
         'Validation': []
     }
 
-    # With MFCCs
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
                             'SML11_k', 'SML12_k', 'SML13_k', 'SML21_k', 'SML22_k', 'SML23_k', 'SML31_k', 'SML32_k', 'SML33_k', 'SML41_k', 'SML42_k', 'SML43_k', 'x2D_DCT1_k', 'x2D_DCT2_k', 'x2D_DCT3_k', 'x2D_DCT4_k', 'x2D_DCT5_k', 'x2D_DCT6_k', 'x2D_DCT7_k', 'x2D_DCT8_k', 'x2D_DCT9_k',
                             'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p']
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
     X_df, X_train, X_test, y_train, y_test = prepare_data(als_df, y)
-    main_classification(X_df, X_train, X_test, y_train, y_test)
+    main_classification(X_df, X_train, X_test, y_train, y_test, 'speech.xlsx')
 
-    results_df = pd.DataFrame(results)
-    results_df.to_excel(os.path.join(results_path, 'speech.xlsx'), index=False)
-
+    # Without MFCCs
     results = {
         'Technique': [],
         'Model': [],
@@ -282,7 +283,6 @@ if __name__ == "__main__":
         'Validation': []
     }
 
-    # Without MFCCs
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
                             'SML11_k', 'SML12_k', 'SML13_k', 'SML21_k', 'SML22_k', 'SML23_k', 'SML31_k', 'SML32_k', 'SML33_k', 'SML41_k', 'SML42_k', 'SML43_k', 'x2D_DCT1_k', 'x2D_DCT2_k', 'x2D_DCT3_k', 'x2D_DCT4_k', 'x2D_DCT5_k', 'x2D_DCT6_k', 'x2D_DCT7_k', 'x2D_DCT8_k', 'x2D_DCT9_k',
                             'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p',
@@ -298,7 +298,4 @@ if __name__ == "__main__":
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
     X_df, X_train, X_test, y_train, y_test = prepare_data(als_df, y)
-    main_classification(X_df, X_train, X_test, y_train, y_test)
-    
-    results_df = pd.DataFrame(results)
-    results_df.to_excel(os.path.join(results_path, 'speech_noMFCCs.xlsx'), index=False)
+    main_classification(X_df, X_train, X_test, y_train, y_test, 'speech_noMFCCs.xlsx')
