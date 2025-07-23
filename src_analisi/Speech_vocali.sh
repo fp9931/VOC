@@ -5,8 +5,8 @@
 #SBATCH --ntasks-per-node=1          # 1 tasks per node
 #SBATCH --time=24:00:00                 # time limits: 24 hours
 #SBATCH --partition=boost_usr_prod   # partition name
-#SBATCH --error=gpu.err       # standard error file
-#SBATCH --output=gpu.out      # standard output file
+#SBATCH --error=Speech_vocali.err       # standard error file
+#SBATCH --output=Speech_vocali.out      # standard output file
 #SBATCH --account=IscrC_AIM-ORAL     # account name
 
-python Speech_sillabe.py
+python Speech_vocali.py

@@ -5,8 +5,8 @@
 #SBATCH --ntasks-per-node=1          # 1 tasks per node
 #SBATCH --time=24:00:00                 # time limits: 24 hours
 #SBATCH --partition=boost_usr_prod   # partition name
-#SBATCH --error=gpu.err       # standard error file
-#SBATCH --output=gpu.out      # standard output file
+#SBATCH --error=Swallowing_sillabe.err       # standard error file
+#SBATCH --output=Swallowing_sillabe.out      # standard output file
 #SBATCH --account=IscrC_AIM-ORAL     # account name
 
 python Swallowing_sillabe.py
