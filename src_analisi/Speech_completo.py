@@ -14,6 +14,8 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.feature_selection import RFECV
+from sklearn.linear_model import LogisticRegression
 
 from collections import Counter
 
@@ -38,17 +40,6 @@ def prepare_data(df, y):
     for train_idx, test_idx in train_test_split.split(X, y):
         X_train, y_train = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
-
-    # # Compute proprortion of each classes in the training set
-    # count_normal = np.sum(y_train == 0)
-    # count_impaired = np.sum(y_train == 1)
-    # proportion_impaired = count_impaired / (count_normal + count_impaired) if (count_normal + count_impaired) > 0 else 0
-    # print(f"Score ALSFRS-R_SpeechSubscore: {count_normal} normal, {count_impaired} impaired, proportion impaired {proportion_impaired:.2f}")
-
-    # count_normal = np.sum(y_test == 0)
-    # count_impaired = np.sum(y_test == 1)
-    # proportion_impaired = count_impaired / (count_normal + count_impaired) if (count_normal + count_impaired) > 0 else 0
-    # print(f"Score ALSFRS-R_SpeechSubscore: {count_normal} normal, {count_impaired} impaired, proportion impaired {proportion_impaired:.2f}")
 
     #Impute missing values
     imputer = IterativeImputer(max_iter=10, random_state=42)
@@ -107,7 +98,7 @@ def classification_function(model, parameters, X_train, X_test, y_train, y_test,
 def classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features, name_file):
     # SVM Classifier
 
-    model = SVC()
+    model = SVC(class_weight='balanced')
     model_name = "SVM"
     parameters = {
         'C': [0.0001, 0.01, 0.02, 0.1, 0.2, 1, 2, 10, 20, 100, 1000],
@@ -119,7 +110,7 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
 
     # Random Forest Classifier
 
-    model = RandomForestClassifier(random_state=42, n_jobs=-1)
+    model = RandomForestClassifier(random_state=42, n_jobs=-1, class_weight='balanced')
     model_name = "RF"
     parameters = {
         'n_estimators': [10, 20, 30, 40, 50, 60, 70, 100],
@@ -132,8 +123,12 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
 
     # XGBoost Classifier
 
-    model = XGBClassifier(random_state=42, n_jobs=-1)
+    model = XGBClassifier(random_state=42, n_jobs=-1, )
     model_name = "XGB"
+    y_train_positive = len(np.where(y_train == 1)[0])
+    y_train_negative = len(np.where(y_train == 0)[0])
+    scale_pos_weight = y_train_negative / y_train_positive if y_train_positive > 0 else 1
+    model.set_params(scale_pos_weight=scale_pos_weight)
     parameters = {
         'n_estimators': [10, 20, 30, 40, 50, 100, 200],
         'max_depth': [2, 3, 5, 7, 9],
@@ -167,40 +162,41 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
 
 def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
 
-    ##################################################### 5 features per syllable/vowel ##########################################################
+    # ##################################################### 5 features per syllable/vowel ##########################################################
 
-    features_to_select = []
-    task = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
-    for i, id_task in enumerate(task):
-        # Keep only features whose name ends with the current task
-        features = [col for k, col in enumerate(X_df.columns) if col.endswith(id_task)]
-        X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
-        X_task = X_task_df[features]
+    # features_to_select = []
+    # task = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
+    # for i, id_task in enumerate(task):
+    #     # Keep only features whose name ends with the current task
+    #     features = [col for k, col in enumerate(X_df.columns) if col.endswith(id_task)]
+    #     X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+    #     X_task = X_task_df[features]
 
-        # Select only the 5 most importat features using mRMR
-        y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
-        # Feature selection using mRMR
-        selected_features = mrmr_classif(X=X_task, y=y_task, K=5)
-        features_to_select.extend(selected_features)
+    #     # Select only the 5 most importat features using mRMR
+    #     y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
+    #     # Feature selection using mRMR
+    #     selected_features = mrmr_classif(X=X_task, y=y_task, K=5)
 
-    # Select the features in the training and test sets  --> 5 per syllable/vowel
-    X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in features_to_select]]
-    X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in features_to_select]]
+    #     features_to_select.extend(selected_features)
+
+    # # Select the features in the training and test sets  --> 5 per syllable/vowel
+    # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in features_to_select]]
+    # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in features_to_select]]
     
-    feature_selection = "5"
-    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file)
+    # feature_selection = "5"
+    # classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file)
 
-    # #################################################### 10% features per syllable/vowel ##########################################################
+    # # #################################################### 10% features per syllable/vowel ##########################################################
 
-    X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
-    y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
-    selected_features = mrmr_classif(X=X_task_df, y=y_task, K=int(len(X_task_df.columns) * 0.1))
+    # X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+    # y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
+    # selected_features = mrmr_classif(X=X_task_df, y=y_task, K=int(len(X_task_df.columns) * 0.1))
 
-    X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
-    X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
+    # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
+    # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
 
-    feature_selection = "10%"
-    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+    # feature_selection = "10%"
+    # classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
 
     #################################################### Free features per syllable/vowel ##########################################################
 
@@ -209,7 +205,8 @@ def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
     y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
     selected_features = mrmr_classif(X_train_df, y_train_df, K=num_features)
 
-    feature_sets = [selected_features[:i] for i in range(1, len(selected_features) + 1)]
+    feature_sets = [selected_features[:i] for i in range(5, len(selected_features)//2, 5)]
+    print(len(feature_sets))
 
     for feature_set in feature_sets:
         X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in feature_set]]

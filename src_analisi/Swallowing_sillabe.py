@@ -168,40 +168,40 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
 
 def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
 
-    ##################################################### 5 features per syllable/vowel ##########################################################
+    # #################################################### 5 features per syllable/vowel ##########################################################
 
-    features_to_select = []
-    task = ['_k', '_p', '_t']
-    for i, id_task in enumerate(task):
-        # Keep only features whose name ends with the current task
-        features = [col for k, col in enumerate(X_df.columns) if col.endswith(id_task)]
-        X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
-        X_task = X_task_df[features]
+    # features_to_select = []
+    # task = ['_k', '_p', '_t']
+    # for i, id_task in enumerate(task):
+    #     # Keep only features whose name ends with the current task
+    #     features = [col for k, col in enumerate(X_df.columns) if col.endswith(id_task)]
+    #     X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+    #     X_task = X_task_df[features]
 
-        # Select only the 5 most importat features using mRMR
-        y_task = pd.Series(y_train, name='ALSFRS-R_SwallowingSubscore')
-        # Feature selection using mRMR
-        selected_features = mrmr_classif(X=X_task, y=y_task, K=5)
-        features_to_select.extend(selected_features)
+    #     # Select only the 5 most importat features using mRMR
+    #     y_task = pd.Series(y_train, name='ALSFRS-R_SwallowingSubscore')
+    #     # Feature selection using mRMR
+    #     selected_features = mrmr_classif(X=X_task, y=y_task, K=5)
+    #     features_to_select.extend(selected_features)
 
-    # Select the features in the training and test sets  --> 5 per syllable/vowel
-    X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in features_to_select]]
-    X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in features_to_select]]
+    # # Select the features in the training and test sets  --> 5 per syllable/vowel
+    # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in features_to_select]]
+    # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in features_to_select]]
     
-    feature_selection = "5"
-    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file)
+    # feature_selection = "5"
+    # classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file)
 
-    # #################################################### 10% features per syllable/vowel ##########################################################
+    # # #################################################### 10% features per syllable/vowel ##########################################################
 
-    X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
-    y_task = pd.Series(y_train, name='ALSFRS-R_SwallowingSubscore')
-    selected_features = mrmr_classif(X=X_task_df, y=y_task, K=int(len(X_task_df.columns) * 0.1))
+    # X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+    # y_task = pd.Series(y_train, name='ALSFRS-R_SwallowingSubscore')
+    # selected_features = mrmr_classif(X=X_task_df, y=y_task, K=int(len(X_task_df.columns) * 0.1))
 
-    X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
-    X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
+    # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
+    # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
 
-    feature_selection = "10%"
-    classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+    # feature_selection = "10%"
+    # classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
 
     #################################################### Free features per syllable/vowel ##########################################################
 
@@ -210,7 +210,7 @@ def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
     y_train_df = pd.Series(y_train, name='ALSFRS-R_SwallowingSubscore')
     selected_features = mrmr_classif(X_train_df, y_train_df, K=num_features)
 
-    feature_sets = [selected_features[:i] for i in range(1, len(selected_features) + 1)]
+    feature_sets = [selected_features[:i] for i in range(5, len(selected_features)//2, 5)]
 
     for feature_set in feature_sets:
         X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in feature_set]]
