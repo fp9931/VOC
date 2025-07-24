@@ -252,50 +252,52 @@ def main_classification(df, y, name_file, results):
         y_predicted_5['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
         y_predicted_5['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
 
-        #################################################### 10% features per syllable/vowel ##########################################################
+        print(f"Fold {train_idx+1} / {len(y)}")
 
-        X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
-        y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
-        selected_features_idx = RFE(estimator=LogisticRegression(max_iter=1000), step=1, n_features_to_select=int(len(X_task_df.columns) * 0.1)).fit(X_task_df, y_task).support_
-        selected_features = [X_task_df.columns[j] for j in range(len(X_task_df.columns)) if selected_features_idx[j]]
+        # #################################################### 10% features per syllable/vowel ##########################################################
 
-        X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
-        X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+        # y_task = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
+        # selected_features_idx = RFE(estimator=LogisticRegression(max_iter=1000), step=1, n_features_to_select=int(len(X_task_df.columns) * 0.1)).fit(X_task_df, y_task).support_
+        # selected_features = [X_task_df.columns[j] for j in range(len(X_task_df.columns)) if selected_features_idx[j]]
 
-        feature_selection = "10%"
-        res_loo = classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
-        y_predicted_10['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
-        y_predicted_10['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
-        y_predicted_10['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
-        y_predicted_10['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
-        y_predicted_10['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
+        # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
 
-        #################################################### Free features per syllable/vowel ##########################################################
+        # feature_selection = "10%"
+        # res_loo = classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+        # y_predicted_10['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
+        # y_predicted_10['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
+        # y_predicted_10['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
+        # y_predicted_10['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
+        # y_predicted_10['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
 
-        num_features = X_train.shape[1]
-        X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
-        y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
-        selected_features_idx = RFECV(estimator=LogisticRegression(max_iter=1000), step=1, cv=StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42), min_features_to_select=5).fit(X_train_df, y_train_df).support_
-        selected_features = [X_train_df.columns[j] for j in range(len(X_train_df.columns)) if selected_features_idx[j]]
+        # #################################################### Free features per syllable/vowel ##########################################################
 
-        X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
-        X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # num_features = X_train.shape[1]
+        # X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
+        # y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
+        # selected_features_idx = RFECV(estimator=LogisticRegression(max_iter=1000), step=1, cv=StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42), min_features_to_select=5).fit(X_train_df, y_train_df).support_
+        # selected_features = [X_train_df.columns[j] for j in range(len(X_train_df.columns)) if selected_features_idx[j]]
+
+        # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
         
-        feature_selection = "Free"
-        res_loo = classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
-        y_predicted_free['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
-        y_predicted_free['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
-        y_predicted_free['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
-        y_predicted_free['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
-        y_predicted_free['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
+        # feature_selection = "Free"
+        # res_loo = classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+        # y_predicted_free['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
+        # y_predicted_free['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
+        # y_predicted_free['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
+        # y_predicted_free['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
+        # y_predicted_free['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
 
     # Convert the lists of predictions to numpy arrays
     y_predicted_5 = {key: np.array(value) for key, value in y_predicted_5.items()}
-    y_predicted_10 = {key: np.array(value) for key, value in y_predicted_10.items()}
-    y_predicted_free = {key: np.array(value) for key, value in y_predicted_free.items()}
+    # y_predicted_10 = {key: np.array(value) for key, value in y_predicted_10.items()}
+    # y_predicted_free = {key: np.array(value) for key, value in y_predicted_free.items()}
     # Save the predictions to Excel files
-    results['Model'] = (list(y_predicted_5.keys()) + list(y_predicted_10.keys()) + list(y_predicted_free.keys()))
-    results['Technique'] = ['5'] * len(y_predicted_5) + ['10%'] * len(y_predicted_10) + ['Free'] * len(y_predicted_free)
+    results['Model'] = list(y_predicted_5.keys()) #+ list(y_predicted_10.keys()) + list(y_predicted_free.keys()))
+    results['Technique'] = ['5'] * len(y_predicted_5) #+ ['10%'] * len(y_predicted_10) + ['Free'] * len(y_predicted_free)
     results['Parameters'] = [''] * len(results['Model'])  # No parameters to save
     results['Features set'] = [''] * len(results['Model'])  # No specific features set to save
 
@@ -315,35 +317,35 @@ def main_classification(df, y, name_file, results):
         results['Specificity'].append(results['TN'][-1] / (results['TN'][-1] + results['FP'][-1]) if (results['TN'][-1] + results['FP'][-1]) > 0 else 0)
         results['Sensitivity'].append(results['TP'][-1] / (results['TP'][-1] + results['FN'][-1]) if (results['TP'][-1] + results['FN'][-1]) > 0 else 0)
 
-    for model in y_predicted_10.keys():
-        y_pred = y_predicted_10[model]
-        tn, fp, fn, tp = confusion_matrix(y, y_pred).ravel()
-        # Compute metrics
-        results['TP'].append(tp)
-        results['FP'].append(fp)
-        results['TN'].append(tn)
-        results['FN'].append(fn)
-        results['Accuracy'].append(accuracy_score(y, y_pred))
-        results['F1-score'].append(f1_score(y, y_pred))
-        results['Recall'].append(recall_score(y, y_pred))
-        results['Precision'].append(precision_score(y, y_pred))
-        results['Specificity'].append(results['TN'][-1] / (results['TN'][-1] + results['FP'][-1]) if (results['TN'][-1] + results['FP'][-1]) > 0 else 0)
-        results['Sensitivity'].append(results['TP'][-1] / (results['TP'][-1] + results['FN'][-1]) if (results['TP'][-1] + results['FN'][-1]) > 0 else 0)
+    # for model in y_predicted_10.keys():
+    #     y_pred = y_predicted_10[model]
+    #     tn, fp, fn, tp = confusion_matrix(y, y_pred).ravel()
+    #     # Compute metrics
+    #     results['TP'].append(tp)
+    #     results['FP'].append(fp)
+    #     results['TN'].append(tn)
+    #     results['FN'].append(fn)
+    #     results['Accuracy'].append(accuracy_score(y, y_pred))
+    #     results['F1-score'].append(f1_score(y, y_pred))
+    #     results['Recall'].append(recall_score(y, y_pred))
+    #     results['Precision'].append(precision_score(y, y_pred))
+    #     results['Specificity'].append(results['TN'][-1] / (results['TN'][-1] + results['FP'][-1]) if (results['TN'][-1] + results['FP'][-1]) > 0 else 0)
+    #     results['Sensitivity'].append(results['TP'][-1] / (results['TP'][-1] + results['FN'][-1]) if (results['TP'][-1] + results['FN'][-1]) > 0 else 0)
 
-    for model in y_predicted_free.keys():
-        y_pred = y_predicted_free[model]
-        tn, fp, fn, tp = confusion_matrix(y, y_pred).ravel()
-        # Compute metrics
-        results['TP'].append(tp)
-        results['FP'].append(fp)
-        results['TN'].append(tn)
-        results['FN'].append(fn)
-        results['Accuracy'].append(accuracy_score(y, y_pred))
-        results['F1-score'].append(f1_score(y, y_pred))
-        results['Recall'].append(recall_score(y, y_pred))
-        results['Precision'].append(precision_score(y, y_pred))
-        results['Specificity'].append(results['TN'][-1] / (results['TN'][-1] + results['FP'][-1]) if (results['TN'][-1] + results['FP'][-1]) > 0 else 0)
-        results['Sensitivity'].append(results['TP'][-1] / (results['TP'][-1] + results['FN'][-1]) if (results['TP'][-1] + results['FN'][-1]) > 0 else 0)
+    # for model in y_predicted_free.keys():
+    #     y_pred = y_predicted_free[model]
+    #     tn, fp, fn, tp = confusion_matrix(y, y_pred).ravel()
+    #     # Compute metrics
+    #     results['TP'].append(tp)
+    #     results['FP'].append(fp)
+    #     results['TN'].append(tn)
+    #     results['FN'].append(fn)
+    #     results['Accuracy'].append(accuracy_score(y, y_pred))
+    #     results['F1-score'].append(f1_score(y, y_pred))
+    #     results['Recall'].append(recall_score(y, y_pred))
+    #     results['Precision'].append(precision_score(y, y_pred))
+    #     results['Specificity'].append(results['TN'][-1] / (results['TN'][-1] + results['FP'][-1]) if (results['TN'][-1] + results['FP'][-1]) > 0 else 0)
+    #     results['Sensitivity'].append(results['TP'][-1] / (results['TP'][-1] + results['FN'][-1]) if (results['TP'][-1] + results['FN'][-1]) > 0 else 0)
     
     results_df = pd.DataFrame(results)
     results_df.to_excel(os.path.join(results_path, name_file), index=False)

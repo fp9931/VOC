@@ -184,50 +184,52 @@ def main_regression(df, y, name_file, results):
         y_predicted_5['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
         y_predicted_5['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
 
+        print(f"Fold {train_idx+1} / {len(y)}")
+
         #################################################### 10% features per syllable/vowel ##########################################################
 
-        X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
-        y_task = pd.Series(y_train, name='PUMNS_BulbarSubscore')
-        selected_features_idx = RFE(estimator=LinearRegression(), step=1, n_features_to_select=int(len(X_task_df.columns) * 0.1)).fit(X_task_df, y_task).support_
-        selected_features = [X_task_df.columns[j] for j in range(len(X_task_df.columns)) if selected_features_idx[j]]
+        # X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+        # y_task = pd.Series(y_train, name='PUMNS_BulbarSubscore')
+        # selected_features_idx = RFE(estimator=LinearRegression(), step=1, n_features_to_select=int(len(X_task_df.columns) * 0.1)).fit(X_task_df, y_task).support_
+        # selected_features = [X_task_df.columns[j] for j in range(len(X_task_df.columns)) if selected_features_idx[j]]
 
-        X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
-        X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
 
-        feature_selection = "10%"
-        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
-        y_predicted_10['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
-        y_predicted_10['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
-        y_predicted_10['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
-        y_predicted_10['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
-        y_predicted_10['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
+        # feature_selection = "10%"
+        # res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+        # y_predicted_10['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
+        # y_predicted_10['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
+        # y_predicted_10['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
+        # y_predicted_10['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
+        # y_predicted_10['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
 
         #################################################### Free features per syllable/vowel ##########################################################
 
-        num_features = X_train.shape[1]
-        X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
-        y_train_df = pd.Series(y_train, name='PUMNS_BulbarSubscore')
-        selected_features_idx = RFECV(estimator=LinearRegression(), step=1, cv=StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42), min_features_to_select=5).fit(X_train_df, y_train_df).support_
-        selected_features = [X_train_df.columns[j] for j in range(len(X_train_df.columns)) if selected_features_idx[j]]
+        # num_features = X_train.shape[1]
+        # X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
+        # y_train_df = pd.Series(y_train, name='PUMNS_BulbarSubscore')
+        # selected_features_idx = RFECV(estimator=LinearRegression(), step=1, cv=StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42), min_features_to_select=5).fit(X_train_df, y_train_df).support_
+        # selected_features = [X_train_df.columns[j] for j in range(len(X_train_df.columns)) if selected_features_idx[j]]
 
-        X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
-        X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in selected_features]]
+        # X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
         
-        feature_selection = "Free"
-        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
-        y_predicted_free['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
-        y_predicted_free['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
-        y_predicted_free['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
-        y_predicted_free['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
-        y_predicted_free['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
+        # feature_selection = "Free"
+        # res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+        # y_predicted_free['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
+        # y_predicted_free['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
+        # y_predicted_free['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
+        # y_predicted_free['KNN'].append(res_loo['KNN'].tolist()[0])  # Store the first element of the KNN predictions
+        # y_predicted_free['MLP'].append(res_loo['MLP'].tolist()[0])  # Store the first element of the MLP predictions
 
     # Convert the lists of predictions to numpy arrays
     y_predicted_5 = {key: np.array(value) for key, value in y_predicted_5.items()}
-    y_predicted_10 = {key: np.array(value) for key, value in y_predicted_10.items()}
-    y_predicted_free = {key: np.array(value) for key, value in y_predicted_free.items()}
+    # y_predicted_10 = {key: np.array(value) for key, value in y_predicted_10.items()}
+    # y_predicted_free = {key: np.array(value) for key, value in y_predicted_free.items()}
     # Save the predictions to Excel files
     results['Model'] = (list(y_predicted_5.keys()) + list(y_predicted_10.keys()) + list(y_predicted_free.keys()))
-    results['Technique'] = ['5'] * len(y_predicted_5) + ['10%'] * len(y_predicted_10) + ['Free'] * len(y_predicted_free)
+    results['Technique'] = ['5'] * len(y_predicted_5) #+ ['10%'] * len(y_predicted_10) + ['Free'] * len(y_predicted_free)
 
     # Score the predictions
     for model in y_predicted_5.keys():
@@ -237,19 +239,19 @@ def main_regression(df, y, name_file, results):
         results['RMSE'].append(rmse)
         results['R2'].append(r2)
 
-    for model in y_predicted_10.keys():
-        y_pred = y_predicted_10[model]
-        rmse = root_mean_squared_error(y, y_pred)
-        r2 = r2_score(y, y_pred)
-        results['RMSE'].append(rmse)
-        results['R2'].append(r2)
+    # for model in y_predicted_10.keys():
+    #     y_pred = y_predicted_10[model]
+    #     rmse = root_mean_squared_error(y, y_pred)
+    #     r2 = r2_score(y, y_pred)
+    #     results['RMSE'].append(rmse)
+    #     results['R2'].append(r2)
 
-    for model in y_predicted_free.keys():
-        y_pred = y_predicted_free[model]
-        rmse = root_mean_squared_error(y, y_pred)
-        r2 = r2_score(y, y_pred)
-        results['RMSE'].append(rmse)
-        results['R2'].append(r2)
+    # for model in y_predicted_free.keys():
+    #     y_pred = y_predicted_free[model]
+    #     rmse = root_mean_squared_error(y, y_pred)
+    #     r2 = r2_score(y, y_pred)
+    #     results['RMSE'].append(rmse)
+    #     results['R2'].append(r2)
 
     
     results_df = pd.DataFrame(results)
