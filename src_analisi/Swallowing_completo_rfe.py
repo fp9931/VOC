@@ -251,7 +251,7 @@ if __name__ == "__main__":
         'Precision': [],
         'Specificity': [],
         'Sensitivity': [],
-        'Validation': []
+        'F1 train': []
     }
 
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
@@ -278,7 +278,7 @@ if __name__ == "__main__":
         'Precision': [],
         'Specificity': [],
         'Sensitivity': [],
-        'Validation': []
+        'F1 train': []
     }
 
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
@@ -297,3 +297,7 @@ if __name__ == "__main__":
     als_df = remove_columns(als_df_complete, columns_to_drop)
     X_df, X_train, X_test, y_train, y_test = prepare_data(als_df, y)
     main_classification(X_df, X_train, X_test, y_train, y_test, 'swallowing_noMFCCs_rfe.xlsx')
+
+
+
+    

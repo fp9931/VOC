@@ -263,7 +263,7 @@ if __name__ == "__main__":
         'Precision': [],
         'Specificity': [],
         'Sensitivity': [],
-        'Validation': []
+        'F1 train': []
     }
 
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore']
@@ -288,7 +288,7 @@ if __name__ == "__main__":
         'Precision': [],
         'Specificity': [],
         'Sensitivity': [],
-        'Validation': []
+        'F1 train': []
     }
 
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 
