@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from mrmr import mrmr_classif
-from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
+from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit, RandomizedSearchCV
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler
@@ -63,10 +63,13 @@ def classification_function(model, parameters, X_train, X_test, y_train, y_test,
     grid_search.fit(X_train, y_train)
 
     best_model = grid_search.best_estimator_
-    best_score = grid_search.best_score_
     best_params = grid_search.best_params_
 
+    if model_name == "MLP":
+        best_model.fit(X_train, y_train)
+
     # Evaluate on the test set
+    best_score = f1_score(y_train, best_model.predict(X_train))
     test_predictions = best_model.predict(X_test)
     test_f1 = f1_score(y_test, test_predictions)
     tn, fp, fn, tp = confusion_matrix(y_test, test_predictions).ravel()
@@ -90,7 +93,7 @@ def classification_function(model, parameters, X_train, X_test, y_train, y_test,
     results['Precision'].append(precision)
     results['Specificity'].append(specificity)
     results['Sensitivity'].append(sensitivity)
-    results['Validation'].append(best_score)
+    results['F1 train'].append(best_score)
 
     results_df = pd.DataFrame(results)
     results_df.to_excel(os.path.join(results_path, name_file), index=False)
@@ -153,7 +156,7 @@ def classification(X_train_selected, X_test_selected, y_train, y_test, feature_s
     model = MLPClassifier(random_state=42, max_iter=1000, early_stopping=True, n_iter_no_change=10)
     model_name = "MLP"
     parameters = {
-        'hidden_layer_sizes': [(32,), (16,), (8,), (32, 16), (16, 8)],
+        'hidden_layer_sizes': [(64,), (32,), (16,), (8,), (64,32), (32, 16), (16, 8)],
         'activation': ['relu', 'tanh', 'sigmoid'],
         'alpha': [0.0001, 0.001],
         'learning_rate': ['constant', 'adaptive'],
@@ -248,7 +251,7 @@ if __name__ == "__main__":
         'Precision': [],
         'Specificity': [],
         'Sensitivity': [],
-        'Validation': []
+        'F1 train': []
     }
 
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
@@ -275,7 +278,7 @@ if __name__ == "__main__":
         'Precision': [],
         'Specificity': [],
         'Sensitivity': [],
-        'Validation': []
+        'F1 train': []
     }
 
     columns_to_drop = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
