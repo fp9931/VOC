@@ -425,4 +425,4 @@ if __name__ == "__main__":
 ]
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
-    main_classification(als_df, 'speech_noMFCCs_rfe.xlsx', results)
+    main_classification(als_df, 'speech_noMFCCs_LOO_rfe.xlsx', results)
