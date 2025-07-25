@@ -45,7 +45,7 @@ def regression_function(model, parameters, X_train, X_test, y_train, y_test, mod
     results_prediction['True'].append(y_test.tolist())
     results_prediction['Prediction'].append(y_predicted)
     results_prediction_df = pd.DataFrame(results_prediction)
-    results_prediction_df.to_excel(os.path.join(results_path, 'results.xlsx'), index=False)
+    results_prediction_df.to_excel(os.path.join(results_path, 'results_sillabe.xlsx'), index=False)
     return y_predicted
 
 def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features, name_file, results_prediction):
@@ -169,7 +169,7 @@ def main_regression(df, y, name_file, results, results_prediction):
         ##################################################### 5 features per syllable/vowel ##########################################################
 
         features_to_select = []
-        task = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
+        task = ['_k', '_p', '_t']
         for i, id_task in enumerate(task):
             # Keep only features whose name ends with the current task
             features = [col for k, col in enumerate(X_df.columns) if col.endswith(id_task)]
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     results_path = os.path.join(general_path, 'Results')
 
     # Load the cleaned dataframes
-    df = pd.read_excel(os.path.join(features_path, 'complete_clean.xlsx'))
+    df = pd.read_excel(os.path.join(features_path, 'syllables_clean.xlsx'))
 
     # Filter ALS patients and drop unnecessary columns
     als_df_complete = df[df['category'] == 'ALS']
@@ -302,7 +302,7 @@ if __name__ == "__main__":
                             'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p']
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
-    main_regression(als_df, y, 'bulbar_LOO_rfe.xlsx', results, results_prediction)
+    main_regression(als_df, y, 'bulbar_LOO_sillabe_rfe.xlsx', results, results_prediction)
 
     # Without MFCCs
     results = {
@@ -325,12 +325,7 @@ if __name__ == "__main__":
                             'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p',
                             'mfcc_0_t', 'mfcc_1_t', 'mfcc_2_t', 'mfcc_3_t', 'mfcc_4_t', 'mfcc_5_t', 'mfcc_6_t', 'mfcc_7_t', 'mfcc_8_t', 'mfcc_9_t', 'mfcc_10_t', 'mfcc_11_t',
                             'mfcc_0_k', 'mfcc_1_k', 'mfcc_2_k', 'mfcc_3_k', 'mfcc_4_k', 'mfcc_5_k', 'mfcc_6_k', 'mfcc_7_k', 'mfcc_8_k', 'mfcc_9_k', 'mfcc_10_k', 'mfcc_11_k',
-                            'mfcc_0_p', 'mfcc_1_p', 'mfcc_2_p', 'mfcc_3_p', 'mfcc_4_p', 'mfcc_5_p', 'mfcc_6_p', 'mfcc_7_p', 'mfcc_8_p', 'mfcc_9_p', 'mfcc_10_p', 'mfcc_11_p',
-                            'mfcc_0_a', 'mfcc_1_a', 'mfcc_2_a', 'mfcc_3_a', 'mfcc_4_a', 'mfcc_5_a', 'mfcc_6_a', 'mfcc_7_a', 'mfcc_8_a', 'mfcc_9_a', 'mfcc_10_a', 'mfcc_11_a',
-                            'mfcc_0_e', 'mfcc_1_e', 'mfcc_2_e', 'mfcc_3_e', 'mfcc_4_e', 'mfcc_5_e', 'mfcc_6_e', 'mfcc_7_e', 'mfcc_8_e', 'mfcc_9_e', 'mfcc_10_e', 'mfcc_11_e',
-                            'mfcc_0_i', 'mfcc_1_i', 'mfcc_2_i', 'mfcc_3_i', 'mfcc_4_i', 'mfcc_5_i', 'mfcc_6_i', 'mfcc_7_i', 'mfcc_8_i', 'mfcc_9_i', 'mfcc_10_i', 'mfcc_11_i',
-                            'mfcc_0_o', 'mfcc_1_o', 'mfcc_2_o', 'mfcc_3_o', 'mfcc_4_o', 'mfcc_5_o', 'mfcc_6_o', 'mfcc_7_o', 'mfcc_8_o', 'mfcc_9_o', 'mfcc_10_o', 'mfcc_11_o',
-                            'mfcc_0_u', 'mfcc_1_u', 'mfcc_2_u', 'mfcc_3_u', 'mfcc_4_u', 'mfcc_5_u', 'mfcc_6_u', 'mfcc_7_u', 'mfcc_8_u', 'mfcc_9_u', 'mfcc_10_u', 'mfcc_11_u']
-
+                            'mfcc_0_p', 'mfcc_1_p', 'mfcc_2_p', 'mfcc_3_p', 'mfcc_4_p', 'mfcc_5_p', 'mfcc_6_p', 'mfcc_7_p', 'mfcc_8_p', 'mfcc_9_p', 'mfcc_10_p', 'mfcc_11_p']
+    
     als_df = remove_columns(als_df_complete, columns_to_drop)
-    main_regression(als_df, y, 'bulbar_noMFCCs_LOO_rfe.xlsx', results, results_prediction)
+    main_regression(als_df, y, 'bulbar_noMFCCs_LOO_sillabe_rfe.xlsx', results, results_prediction)
