@@ -53,10 +53,11 @@ def regression_function(model, parameters, X_train, X_test, y_train, y_test, mod
     grid_search.fit(X_train, y_train)
 
     best_model = grid_search.best_estimator_
-    best_score = grid_search.best_score_
     best_params = grid_search.best_params_
 
     # Evaluate on the test set for regression rmse, etc..
+    training_predictions = best_model.predict(X_train)
+    rmse_train = root_mean_squared_error(y_train, training_predictions)
     test_predictions = best_model.predict(X_test)
     rmse = root_mean_squared_error(y_test, test_predictions)
     r2 = r2_score(y_test, test_predictions)
@@ -67,7 +68,7 @@ def regression_function(model, parameters, X_train, X_test, y_train, y_test, mod
     results['Features set'].append(features)
     results['RMSE'].append(rmse)
     results['R2'].append(r2)
-    results['Validation'].append(best_score)
+    results['Validation'].append(rmse_train)
 
     results_df = pd.DataFrame(results)
     results_df.to_excel(os.path.join(results_path, name_file), index=False)

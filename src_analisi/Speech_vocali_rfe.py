@@ -289,4 +289,4 @@ if __name__ == "__main__":
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
     X_df, X_train, X_test, y_train, y_test = prepare_data(als_df, y)
-    main_classification(X_df, X_train, X_test, y_train, y_test, 'speech_noMFCCs_vowels_rfe.xlsx')
+    main_classification(X_df, X_train, X_test, y_train, y_test, 'speech_noMFCCs_vocali_rfe.xlsx')

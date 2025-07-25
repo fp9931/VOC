@@ -177,7 +177,7 @@ def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
     ##################################################### 5 features per syllable/vowel ##########################################################
 
     features_to_select = []
-    task = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
+    task = ['_k', '_p', '_t']
     for i, id_task in enumerate(task):
         # Keep only features whose name ends with the current task
         features = [col for k, col in enumerate(X_df.columns) if col.endswith(id_task)]
@@ -210,22 +210,22 @@ def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
     feature_selection = "10%"
     classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
 
-    #################################################### Free features per syllable/vowel ##########################################################
+    # #################################################### Free features per syllable/vowel ##########################################################
 
-    num_features = X_train.shape[1]
-    X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
-    y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
-    selected_features = mrmr_classif(X_train_df, y_train_df, K=num_features)
+    # num_features = X_train.shape[1]
+    # X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
+    # y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
+    # selected_features = mrmr_classif(X_train_df, y_train_df, K=num_features)
 
-    feature_sets = [selected_features[:i] for i in range(5, len(selected_features)//2, 5)]
-    print(len(feature_sets))
+    # feature_sets = [selected_features[:i] for i in range(5, len(selected_features)//2, 5)]
+    # print(len(feature_sets))
 
-    for feature_set in feature_sets:
-        X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in feature_set]]
-        X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in feature_set]]
+    # for feature_set in feature_sets:
+    #     X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in feature_set]]
+    #     X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in feature_set]]
         
-        feature_selection = "Free"
-        classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, feature_set, name_file)
+    #     feature_selection = "Free"
+    #     classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, feature_set, name_file)
 
 # Main
 if __name__ == "__main__":
