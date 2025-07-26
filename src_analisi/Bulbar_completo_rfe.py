@@ -23,7 +23,7 @@ def remove_columns(df, columns_to_remove):
     df_clean = df.drop(columns=columns_to_remove)
     return df_clean
 
-def regression_function(model, parameters, X_train, X_test, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction):
+def regression_function(model, parameters, X_train, X_test, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction, results_name):
 
     global results, results_path
 
@@ -45,10 +45,10 @@ def regression_function(model, parameters, X_train, X_test, y_train, y_test, mod
     results_prediction['True'].append(y_test.tolist())
     results_prediction['Prediction'].append(y_predicted)
     results_prediction_df = pd.DataFrame(results_prediction)
-    results_prediction_df.to_excel(os.path.join(results_path, 'results.xlsx'), index=False)
+    results_prediction_df.to_excel(os.path.join(results_path, results_name), index=False)
     return y_predicted
 
-def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features, name_file, results_prediction):
+def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features, name_file, results_prediction, results_name):
     # SVM Classifier
     print('SVM')
     model = SVR()
@@ -59,7 +59,7 @@ def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selec
         'gamma': [0.0001, 0.001, 0.01, 0.1, 1],
         'degree': [2, 3, 4],
     }
-    y_predicted_svm = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction)
+    y_predicted_svm = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction, results_name)
 
     # Random Forest Classifier
     print('RF')
@@ -71,7 +71,7 @@ def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selec
         'min_samples_split': [2, 5, 10],
         'min_samples_leaf': [1, 2, 4],
     }
-    y_predicted_rf = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction)
+    y_predicted_rf = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction, results_name)
 
 
     # XGBoost Classifier
@@ -88,7 +88,7 @@ def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selec
         'learning_rate': [0.01, 0.1, 0.2, 0.5, 0.7, 1.0],
         'subsample': [0.1, 0.2, 0.3, 0.5, 0.7, 1.0],
     }
-    y_predicted_xgb = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction)
+    y_predicted_xgb = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction, results_name)
 
     # KNN classifier
     print('KNN')
@@ -99,7 +99,7 @@ def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selec
         'weights': ['uniform', 'distance'],
         'metric': ['euclidean', 'manhattan', 'minkowski'],
     }
-    y_predicted_knn = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction)
+    y_predicted_knn = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction, results_name)
 
     # MLP Classifier
     print('MLP')
@@ -111,7 +111,7 @@ def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selec
         'alpha': [0.0001, 0.001],
         'learning_rate': ['constant', 'adaptive'],
     }
-    y_predicted_mlp = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction)
+    y_predicted_mlp = regression_function(model, parameters, X_train_selected, X_test_selected, y_train, y_test, model_name, feature_selection, features, name_file, results_prediction, results_name)
 
     return {
         'SVM': y_predicted_svm,
@@ -121,7 +121,7 @@ def regression(X_train_selected, X_test_selected, y_train, y_test, feature_selec
         'MLP': y_predicted_mlp
     }
 
-def main_regression(df, y, name_file, results, results_prediction):
+def main_regression(df, y, name_file, results, results_prediction, results_name):
 
     X_df = df.copy()
     X = X_df.values
@@ -188,7 +188,7 @@ def main_regression(df, y, name_file, results, results_prediction):
         X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in features_to_select]]
         
         feature_selection = "5"
-        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file, results_prediction)
+        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, features_to_select, name_file, results_prediction, results_name)
         y_predicted_5['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
         y_predicted_5['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
         y_predicted_5['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
@@ -206,7 +206,7 @@ def main_regression(df, y, name_file, results, results_prediction):
         X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
 
         feature_selection = "10%"
-        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file, results_prediction, results_name)
         y_predicted_10['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
         y_predicted_10['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
         y_predicted_10['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
@@ -225,7 +225,7 @@ def main_regression(df, y, name_file, results, results_prediction):
         X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in selected_features]]
         
         feature_selection = "Free"
-        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file)
+        res_loo = regression(X_train_selected, X_test_selected, y_train, y_test, feature_selection, selected_features, name_file, results_prediction, results_name)
         y_predicted_free['SVM'].append(res_loo['SVM'].tolist()[0])  # Store the first element of the SVM predictions
         y_predicted_free['RF'].append(res_loo['RF'].tolist()[0])  # Store the first element of the RF predictions
         y_predicted_free['XGB'].append(res_loo['XGB'].tolist()[0])  # Store the first element of the XGB predictions
@@ -302,7 +302,7 @@ if __name__ == "__main__":
                             'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p']
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
-    main_regression(als_df, y, 'bulbar_LOO_rfe.xlsx', results, results_prediction)
+    main_regression(als_df, y, 'bulbar_LOO_rfe.xlsx', results, results_prediction, 'results.xlsx')
 
     # Without MFCCs
     results = {
@@ -333,4 +333,4 @@ if __name__ == "__main__":
                             'mfcc_0_u', 'mfcc_1_u', 'mfcc_2_u', 'mfcc_3_u', 'mfcc_4_u', 'mfcc_5_u', 'mfcc_6_u', 'mfcc_7_u', 'mfcc_8_u', 'mfcc_9_u', 'mfcc_10_u', 'mfcc_11_u']
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
-    main_regression(als_df, y, 'bulbar_noMFCCs_LOO_rfe.xlsx', results, results_prediction)
+    main_regression(als_df, y, 'bulbar_noMFCCs_LOO_rfe.xlsx', results, results_prediction, 'results_noMFCCs.xlsx')

@@ -212,20 +212,20 @@ def main_classification(X_df, X_train, X_test, y_train, y_test, name_file):
 
     # #################################################### Free features per syllable/vowel ##########################################################
 
-    # num_features = X_train.shape[1]
-    # X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
-    # y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
-    # selected_features = mrmr_classif(X_train_df, y_train_df, K=num_features)
+    num_features = X_train.shape[1]
+    X_train_df = pd.DataFrame(X_train, columns=X_df.columns)
+    y_train_df = pd.Series(y_train, name='ALSFRS-R_SpeechSubscore')
+    selected_features = mrmr_classif(X_train_df, y_train_df, K=num_features)
 
-    # feature_sets = [selected_features[:i] for i in range(5, len(selected_features)//2, 5)]
-    # print(len(feature_sets))
+    feature_sets = [selected_features[:i] for i in range(5, len(selected_features)//2, 5)]
+    print(len(feature_sets))
 
-    # for feature_set in feature_sets:
-    #     X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in feature_set]]
-    #     X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in feature_set]]
+    for feature_set in feature_sets:
+        X_train_selected = X_train[:, [X_df.columns.get_loc(col) for col in feature_set]]
+        X_test_selected = X_test[:, [X_df.columns.get_loc(col) for col in feature_set]]
         
-    #     feature_selection = "Free"
-    #     classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, feature_set, name_file)
+        feature_selection = "Free"
+        classification(X_train_selected, X_test_selected, y_train, y_test, feature_selection, feature_set, name_file)
 
 
 # Main
@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
     als_df = remove_columns(als_df_complete, columns_to_drop)
     X_df, X_train, X_test, y_train, y_test = prepare_data(als_df, y)
-    main_classification(X_df, X_train, X_test, y_train, y_test, 'speech_vowels.xlsx')
+    main_classification(X_df, X_train, X_test, y_train, y_test, 'speech_vocali.xlsx')
 
     # Without MFCCs
     results = {
