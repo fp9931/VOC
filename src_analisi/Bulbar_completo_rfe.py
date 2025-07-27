@@ -152,6 +152,8 @@ def main_regression(df, y, name_file, results, results_prediction, results_name)
     for indx, (train_idx, test_idx) in enumerate(train_test_split.split(X, y)):
 
         print(f"Fold {indx+1} / {len(y)}")
+        if indx < 18:
+            continue
 
         X_train, y_train = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
