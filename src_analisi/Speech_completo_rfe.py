@@ -59,7 +59,7 @@ def classification_function(model, parameters, X_train, X_test, y_train, y_test,
 
     # Train-validation split and hyperparameter tuning
     train_test_split = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
-    grid_search = GridSearchCV(model, parameters, cv=train_test_split, scoring='f1', n_jobs=-1)
+    grid_search = GridSearchCV(model, parameters, cv=train_test_split, scoring='roc_auc', n_jobs=-1)
     grid_search.fit(X_train, y_train)
 
     best_model = grid_search.best_estimator_

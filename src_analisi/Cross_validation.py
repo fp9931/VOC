@@ -27,7 +27,9 @@ results_path = os.path.join(general_path, 'Results')
 
 # Load the cleaned dataframes
 df = pd.read_excel(os.path.join(features_path, 'complete_clean.xlsx'))
-results_dataset = pd.read_excel(os.path.join(results_path, 'RFE', 'Speech', 'MFCCs', 'speech_rfe.xlsx'))
+# results_dataset = pd.read_excel(os.path.join(results_path, 'RFE', 'Speech', 'MFCCs', 'speech_rfe.xlsx'))
+results_dataset = pd.read_excel(os.path.join(results_path, 'speech_noMFCCs_rfe.xlsx'))
+
 
 # Filter ALS patients and drop unnecessary columns
 als_df_complete = df[df['category'] == 'ALS']
@@ -175,4 +177,5 @@ for i in range(len(results_dataset)):
 
     # Convert metrics to DataFrame
     metrics_df = pd.DataFrame(metrics)
-    metrics_df = metrics_df.to_excel(os.path.join(results_path, 'RFE', 'Speech', 'MFCCs', 'cross_validation.xlsx'), index=False)
+    metrics_df.to_excel(os.path.join(results_path, 'cross_validation.xlsx'), index=False)
+    #metrics_df = metrics_df.to_excel(os.path.join(results_path, 'RFE', 'Speech', 'MFCCs', 'cross_validation.xlsx'), index=False)
