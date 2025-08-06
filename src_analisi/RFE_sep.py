@@ -355,7 +355,7 @@ def main_classification(df, y, score, task, name_dataset):
                 results_regression['R2 test rounded'].append(test_r2_round)
 
                 results_df = pd.DataFrame(results_regression)
-                results_df.to_excel(os.path.join(results_path, 'results_regression_sep_new.xlsx'), index=False)
+                results_df.to_excel(os.path.join(results_path, 'results_regression_sep.xlsx'), index=False)
 
 
 # Main
@@ -442,20 +442,26 @@ if __name__ == "__main__":
         'R2 test rounded': [],
     }
 
-    # Complete dataset speech
+    # Speech
     als_df = remove_columns(als_df_complete, columns_to_drop_complete)
     main_classification(als_df, y_speech, 'ALSFRS-R_SpeechSubscore', task_complete, 'complete')
-    main_classification(als_df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_complete, 'complete')
-    main_classification(als_df, y_bulbar, 'PUMNS_BulbarSubscore', task_complete, 'complete')
-
-    # Syllables dataset speech
     als_df = remove_columns(als_df_syllable, columns_to_drop_syllable)
     main_classification(als_df, y_speech, 'ALSFRS-R_SpeechSubscore', task_syllable, 'syllable')
-    main_classification(als_df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_syllable, 'syllable')
-    main_classification(als_df, y_bulbar, 'PUMNS_BulbarSubscore', task_syllable, 'syllable')
-
-    # Vowels dataset speech
     als_df = remove_columns(als_df_vowels, columns_to_drop_vowels)
     main_classification(als_df, y_speech, 'ALSFRS-R_SpeechSubscore', task_vowels, 'vowels')
+
+    # Swallowing
+    als_df = remove_columns(als_df_complete, columns_to_drop_complete)
+    main_classification(als_df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_complete, 'complete')
+    als_df = remove_columns(als_df_syllable, columns_to_drop_syllable)
+    main_classification(als_df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_syllable, 'syllable')
+    als_df = remove_columns(als_df_vowels, columns_to_drop_vowels)
     main_classification(als_df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_vowels, 'vowels')
+
+    # Bulbar
+    als_df = remove_columns(als_df_complete, columns_to_drop_complete)
+    main_classification(als_df, y_bulbar, 'PUMNS_BulbarSubscore', task_complete, 'complete')
+    als_df = remove_columns(als_df_syllable, columns_to_drop_syllable)
+    main_classification(als_df, y_bulbar, 'PUMNS_BulbarSubscore', task_syllable, 'syllable')
+    als_df = remove_columns(als_df_vowels, columns_to_drop_vowels)
     main_classification(als_df, y_bulbar, 'PUMNS_BulbarSubscore', task_vowels, 'vowels')
