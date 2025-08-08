@@ -245,11 +245,11 @@ def main_classification(df, y, score, task, name_dataset):
                             rmse_validation.append(validation_rmse)
 
                     if score != 'PUMNS_BulbarSubscore':      
-                        # mean_f1_validation = np.mean(f1_validation)
-                        mean_f1_validation = np.median(f1_validation)
+                        mean_f1_validation = np.mean(f1_validation)
+                        # mean_f1_validation = np.median(f1_validation)
                     else:
-                        # mean_rmse_validation = np.mean(rmse_validation)
-                        mean_rmse_validation = np.median(rmse_validation)
+                        mean_rmse_validation = np.mean(rmse_validation)
+                        #mean_rmse_validation = np.median(rmse_validation)
 
                     all_features_selected = [feat for fold_feats in feature_selections for feat in fold_feats]
                     features_count = Counter(all_features_selected)
