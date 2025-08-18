@@ -9,7 +9,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedKFold, StratifiedShu
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import f1_score, confusion_matrix, recall_score, precision_score, accuracy_score, root_mean_squared_error, root_mean_squared_log_error, r2_score
+from sklearn.metrics import f1_score, confusion_matrix, recall_score, precision_score, accuracy_score, root_mean_squared_error, root_mean_squared_log_error, r2_score, roc_auc_score
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from xgboost import XGBClassifier, XGBRegressor
@@ -191,6 +191,7 @@ def main_classification(df, y, score, task, name_dataset):
 
             if score != 'PUMNS_BulbarSubscore':
                 best_f1_validation = -np.inf
+                # best_roc_validation = -np.inf
                 best_model = None
                 best_params = None
                 best_name = None
@@ -210,11 +211,16 @@ def main_classification(df, y, score, task, name_dataset):
                 model_class = model_info['model'].__class__
                 model_parameters = model_info['parameters']
 
+                print(model_name, model_class, model_parameters)
+
                 for params in itertools.product(*model_parameters.values()):
                     params = dict(zip(model_parameters.keys(), params))
 
+                    print(params)
+
                     if score != 'PUMNS_BulbarSubscore':
                         f1_validation = []
+                        roc_validation = []
                     else:
                         rmse_validation = []
                     
@@ -238,18 +244,21 @@ def main_classification(df, y, score, task, name_dataset):
 
                         if score != 'PUMNS_BulbarSubscore':
                             validation_f1 = f1_score(y_inner_val, y_inner_pred)
+                            validation_roc = roc_auc_score(y_inner_val, y_inner_pred)
                             f1_validation.append(validation_f1)
+                            roc_validation.append(validation_roc)
                         else:
                             y_inner_pred = [round(pred, 0) for pred in y_inner_pred]
                             validation_rmse = root_mean_squared_error(y_inner_val, y_inner_pred)
                             rmse_validation.append(validation_rmse)
 
                     if score != 'PUMNS_BulbarSubscore':      
-                        mean_f1_validation = np.mean(f1_validation)
-                        # mean_f1_validation = np.median(f1_validation)
+                        # mean_f1_validation = np.mean(f1_validation)
+                        mean_f1_validation = np.median(f1_validation)
+                        # mean_roc_validation = np.median(roc_validation)
                     else:
-                        mean_rmse_validation = np.mean(rmse_validation)
-                        #mean_rmse_validation = np.median(rmse_validation)
+                        # mean_rmse_validation = np.mean(rmse_validation)
+                        mean_rmse_validation = np.median(rmse_validation)
 
                     all_features_selected = [feat for fold_feats in feature_selections for feat in fold_feats]
                     features_count = Counter(all_features_selected)
@@ -258,6 +267,8 @@ def main_classification(df, y, score, task, name_dataset):
 
                     if score != 'PUMNS_BulbarSubscore':
                         if mean_f1_validation > best_f1_validation:
+                        # if mean_roc_validation > best_roc_validation:
+                            # best_roc_validation = mean_roc_validation
                             best_f1_validation = mean_f1_validation
                             best_technique = technique
                             best_model = model_class(**params)
@@ -319,7 +330,7 @@ def main_classification(df, y, score, task, name_dataset):
                 results_classification['Sensitivity'].append(sensitivity)
 
                 results_df = pd.DataFrame(results_classification)
-                results_df.to_excel(os.path.join(results_path, 'results_classification_sep.xlsx'), index=False)
+                results_df.to_excel(os.path.join(results_path, 'results_classification_sep_noMFCCs.xlsx'), index=False)
 
             else:
                 train_predictions = final_model.predict(X_train_selected)
@@ -355,7 +366,7 @@ def main_classification(df, y, score, task, name_dataset):
                 results_regression['R2 test rounded'].append(test_r2_round)
 
                 results_df = pd.DataFrame(results_regression)
-                results_df.to_excel(os.path.join(results_path, 'results_regression_sep.xlsx'), index=False)
+                results_df.to_excel(os.path.join(results_path, 'results_regression_sep_noMFCCs.xlsx'), index=False)
 
 
 # Main
@@ -372,9 +383,20 @@ if __name__ == "__main__":
 
     columns_to_drop_complete = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
                         'SML11_k', 'SML12_k', 'SML13_k', 'SML21_k', 'SML22_k', 'SML23_k', 'SML31_k', 'SML32_k', 'SML33_k', 'SML41_k', 'SML42_k', 'SML43_k', 'x2D_DCT1_k', 'x2D_DCT2_k', 'x2D_DCT3_k', 'x2D_DCT4_k', 'x2D_DCT5_k', 'x2D_DCT6_k', 'x2D_DCT7_k', 'x2D_DCT8_k', 'x2D_DCT9_k',
-                        'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p']
-    columns_to_drop_syllable = columns_to_drop_complete 
-    columns_to_drop_vowels = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore']
+                        'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p', 
+                        'mfcc_0_t', 'mfcc_1_t', 'mfcc_2_t', 'mfcc_3_t', 'mfcc_4_t', 'mfcc_5_t', 'mfcc_6_t', 'mfcc_7_t', 'mfcc_8_t', 'mfcc_9_t', 'mfcc_10_t', 'mfcc_11_t',
+                        'mfcc_0_k', 'mfcc_1_k', 'mfcc_2_k', 'mfcc_3_k', 'mfcc_4_k', 'mfcc_5_k', 'mfcc_6_k', 'mfcc_7_k', 'mfcc_8_k', 'mfcc_9_k', 'mfcc_10_k', 'mfcc_11_k',
+                        'mfcc_0_p', 'mfcc_1_p', 'mfcc_2_p', 'mfcc_3_p', 'mfcc_4_p', 'mfcc_5_p', 'mfcc_6_p', 'mfcc_7_p', 'mfcc_8_p', 'mfcc_9_p', 'mfcc_10_p', 'mfcc_11_p'
+                        ]
+    
+    columns_to_drop_syllable = columns_to_drop_complete
+    columns_to_drop_vowels = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore',
+                              'mfcc_0_a', 'mfcc_1_a', 'mfcc_2_a', 'mfcc_3_a', 'mfcc_4_a', 'mfcc_5_a', 'mfcc_6_a', 'mfcc_7_a', 'mfcc_8_a', 'mfcc_9_a', 'mfcc_10_a', 'mfcc_11_a', 'mfcc_12_a',
+                              'mfcc_0_e', 'mfcc_1_e', 'mfcc_2_e', 'mfcc_3_e', 'mfcc_4_e', 'mfcc_5_e', 'mfcc_6_e', 'mfcc_7_e', 'mfcc_8_e', 'mfcc_9_e', 'mfcc_10_e', 'mfcc_11_e', 'mfcc_12_e',
+                              'mfcc_0_i', 'mfcc_1_i', 'mfcc_2_i', 'mfcc_3_i', 'mfcc_4_i', 'mfcc_5_i', 'mfcc_6_i', 'mfcc_7_i', 'mfcc_8_i', 'mfcc_9_i', 'mfcc_10_i', 'mfcc_11_i', 'mfcc_12_i',
+                              'mfcc_0_o', 'mfcc_1_o', 'mfcc_2_o', 'mfcc_3_o', 'mfcc_4_o', 'mfcc_5_o', 'mfcc_6_o', 'mfcc_7_o', 'mfcc_8_o', 'mfcc_9_o', 'mfcc_10_o', 'mfcc_11_o', 'mfcc_12_o',
+                              'mfcc_0_u', 'mfcc_1_u', 'mfcc_2_u', 'mfcc_3_u', 'mfcc_4_u', 'mfcc_5_u', 'mfcc_6_u', 'mfcc_7_u', 'mfcc_8_u', 'mfcc_9_u', 'mfcc_10_u', 'mfcc_11_u', 'mfcc_12_u'
+                              ]
 
     task_complete = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
     task_syllable = ['_k', '_p', '_t']
