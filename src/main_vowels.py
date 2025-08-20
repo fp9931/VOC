@@ -1,88 +1,26 @@
-from vosk import Model, KaldiRecognizer
 from parselmouth.praat import call
 import soundfile as sf
 import pandas as pd
 import numpy as np
 import parselmouth
 import wave
-import json
 import os
-import librosa
-from scipy.fftpack import dct
 
 
 general_path = os.path.dirname(os.getcwd())
 data_path = os.path.join(general_path, 'Data')
-result_path = os.path.join(general_path, 'Results')
-if not os.path.exists(result_path):
-    os.makedirs(result_path)
+feature_path = os.path.join(general_path, 'Features')
+if not os.path.exists(feature_path):
+    os.makedirs(feature_path)
 
 info_path = os.path.join(general_path, 'VOC-ALS.xlsx')
 info = pd.read_excel(info_path)
 sex = info['Sex'].values
 catergory = info['Category'].values
 
-timings_path = os.path.join(result_path, 'timings')
+timings_path = os.path.join(general_path, 'timings')
 
-f2_slope = []
-f1_mean = []
-f2_mean = []
-f3_mean = []
-f1_std = []
-f2_std = []
-f3_std = []
-f1_median = []
-f2_median = []
-f3_median = []
-f1_max = []
-f2_max = []
-f3_max = []
-f1_min = []
-f2_min = []
-f3_min = []
-cpp = []
-cp = []
-hnr_mean = []
-hnr_std = []
-hnr_min = []
-hnr_max = []
-shimmer_local = []
-shimmer_local_dB = []
-shimmer_apq3 = []
-shimmer_apq5 = []
-shimmer_apq11 = []
-shimmer_dda = []
-jitter_local = []
-jitter_local_absolute = []
-jitter_rap = []
-jitter_ppq5 = []
-jitter_ddp = []
-f0_mean = []
-f0_std = []
-f0_min = []
-f0_max = []
-f0_median = []
-f0_25 = []
-f0_75 = []
-duration = []
-task = []
-name = []
-cat = []
-gender = []
-mfcc_0 = []
-mfcc_0 = []
-mfcc_1 = []
-mfcc_2 = []
-mfcc_3 = []
-mfcc_4 = []
-mfcc_5 = []
-mfcc_6 = []
-mfcc_7 = []
-mfcc_8 = []
-mfcc_9 = []
-mfcc_10 = []
-mfcc_11 = []
-mfcc_12 = []
+result = []
 
 count = 0
 for folder in os.listdir(data_path):
@@ -93,10 +31,10 @@ for folder in os.listdir(data_path):
 
         for i, file in enumerate(os.listdir(phonation_path)):
             print(file[:-4])
-            name.append(file[5:])
-            task.append(folder[-1])
-            gender.append(sex[i])
-            cat.append(catergory[i])
+            name = file[:5]
+            task = folder[-1]
+            gender = sex[i]
+            cat = catergory[i]
 
             wav_file = os.path.join(phonation_path, file)
             wf = wave.open(wav_file, "rb")
@@ -113,228 +51,207 @@ for folder in os.listdir(data_path):
             pitch = call(snd, "To Pitch (cc)", 0.0, min_freq, 15, False, 0.03, 0.45, 0.01, 0.35, 0.14, max_freq)
 
             # Temporal features
-            if start == end:
-                duration.append(call(snd, "Get total duration"))
-            else:
-                duration.append(end - start)
+            duration = end - start
+
+            # Extract central 2/4 of the duration
+            start_central = start + duration / 4
+            end_central = end - duration / 4
 
             # F0 metrics
-            f0_mean.append(call(pitch, "Get mean", start, end, "Hertz"))
-            f0_std.append(call(pitch, "Get standard deviation", start, end, "Hertz"))
-            f0_min.append(call(pitch, "Get minimum", start, end, "Hertz", "parabolic"))
-            f0_max.append(call(pitch, "Get maximum", start, end, "Hertz", "parabolic"))
-            f0_median.append(call(pitch, "Get quantile", start, end, 0.5, "Hertz"))
-            f0_25.append(call(pitch, "Get quantile", start, end, 0.25, "Hertz"))
-            f0_75.append(call(pitch, "Get quantile", start, end, 0.75, "Hertz"))
+            f0_mean = call(pitch, "Get mean", start_central, end_central, "Hertz")
+            f0_std = call(pitch, "Get standard deviation", start_central, end_central, "Hertz")
+            f0_min = call(pitch, "Get minimum", start_central, end_central, "Hertz", "parabolic")
+            f0_max = call(pitch, "Get maximum", start_central, end_central, "Hertz", "parabolic")
+            f0_median = call(pitch, "Get quantile", start_central, end_central, 0.5, "Hertz")
+            f0_25 = call(pitch, "Get quantile", start_central, end_central, 0.25, "Hertz")
+            f0_75 = call(pitch, "Get quantile", start_central, end_central, 0.75, "Hertz")
 
             # JItter metrics                             
-            jitter_local.append(call(point_process, "Get jitter (local)", start, end, 0.0001, 1/min_freq, 1.3))
-            jitter_local_absolute.append(call(point_process, "Get jitter (local, absolute)", start, end, 0.0001, 1/min_freq, 1.3))
-            jitter_rap.append(call(point_process, "Get jitter (rap)", start, end, 0.0001, 1/min_freq, 1.3))
-            jitter_ppq5.append(call(point_process, "Get jitter (ppq5)", start, end, 0.0001, 1/min_freq, 1.3))
-            jitter_ddp.append(call(point_process, "Get jitter (ddp)", start, end, 0.0001, 1/min_freq, 1.3))
+            jitter_local = call(point_process, "Get jitter (local)", start_central, end_central, 0.0001, 1/min_freq, 1.3)
+            jitter_local_absolute = call(point_process, "Get jitter (local, absolute)", start_central, end_central, 0.0001, 1/min_freq, 1.3)
+            jitter_rap = call(point_process, "Get jitter (rap)", start_central, end_central, 0.0001, 1/min_freq, 1.3)
+            jitter_ppq5 = call(point_process, "Get jitter (ppq5)", start_central, end_central, 0.0001, 1/min_freq, 1.3)
+            jitter_ddp = call(point_process, "Get jitter (ddp)", start_central, end_central, 0.0001, 1/min_freq, 1.3)
 
             # Shimmer metrics
-            shimmer_local.append(call([snd,point_process], "Get shimmer (local)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-            shimmer_local_dB.append(call([snd,point_process], "Get shimmer (local_dB)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-            shimmer_apq3.append(call([snd,point_process], "Get shimmer (apq3)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-            shimmer_apq5.append(call([snd,point_process], "Get shimmer (apq5)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-            shimmer_apq11.append(call([snd,point_process], "Get shimmer (apq11)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
-            shimmer_dda.append(call([snd,point_process], "Get shimmer (dda)", start, end, 0.0001, 1/min_freq, 1.3, 1.6))
+            shimmer_local = call([snd,point_process], "Get shimmer (local)", start_central, end_central, 0.0001, 1/min_freq, 1.3, 1.6)
+            shimmer_local_dB = call([snd,point_process], "Get shimmer (local_dB)", start_central, end_central, 0.0001, 1/min_freq, 1.3, 1.6)
+            shimmer_apq3 = call([snd,point_process], "Get shimmer (apq3)", start_central, end_central, 0.0001, 1/min_freq, 1.3, 1.6)
+            shimmer_apq5 = call([snd,point_process], "Get shimmer (apq5)", start_central, end_central, 0.0001, 1/min_freq, 1.3, 1.6)
+            shimmer_apq11 = call([snd,point_process], "Get shimmer (apq11)", start_central, end_central, 0.0001, 1/min_freq, 1.3, 1.6)
+            shimmer_dda = call([snd,point_process], "Get shimmer (dda)", start_central, end_central, 0.0001, 1/min_freq, 1.3, 1.6)
 
             # Harmonicity metrics
             harmonicity = call(snd, "To Harmonicity (cc)", 0.01, min_freq, 0.1, 4.5) #take mean, std, range
-            hnr_mean.append(call(harmonicity, "Get mean", start, end)   )
-            hnr_std.append(call(harmonicity, "Get standard deviation", start, end))
-            hnr_min.append(call(harmonicity, "Get minimum", start, end, 'parabolic'))
-            hnr_max.append(call(harmonicity, "Get maximum", start, end, 'parabolic'))
-                            
+            hnr_mean = call(harmonicity, "Get mean", start_central, end_central)
+            hnr_std = call(harmonicity, "Get standard deviation", start_central, end_central)
+            hnr_min = call(harmonicity, "Get minimum", start_central, end_central, 'parabolic')
+            hnr_max = call(harmonicity, "Get maximum", start_central, end_central, 'parabolic')
+
             # Cepstral Peak Prominence
-            spectrum = call(snd, "To Spectrum")
+            snd_vowel = snd.extract_part(start_central, end_central)
+            spectrum = call(snd_vowel, "To Spectrum")
             cepstrum = call(spectrum, "To PowerCepstrum")
-            cpp.append(call(cepstrum, "Get peak prominence", min_freq, max_freq, "parabolic", 0.001, 0.05, "Exponential decay", "Robust slow"))
-            cp.append(call(cepstrum, "Get peak", min_freq, max_freq, "parabolic"))
+            cpp = call(cepstrum, "Get peak prominence", min_freq, max_freq, "parabolic", 0.001, 0.05, "Exponential decay", "Robust slow")
+            cp = call(cepstrum, "Get peak", min_freq, max_freq, "parabolic")
 
             # Formants
             formant_max = 5000 if sex[i] == 'M' else 5500
             formant = call(snd, "To Formant (burg)", 0.0, 5.0, formant_max, 0.025, 50)
-            
-            f1_mean.append(call(formant, "Get mean", 1, start, end, "Hertz"))
-            f2_mean.append(call(formant, "Get mean", 2,  start, end, "Hertz"))
-            f3_mean.append(call(formant, "Get mean", 3, start, end, "Hertz"))
-            f1_std.append(call(formant, "Get standard deviation", 1, start, end, "Hertz"))
-            f2_std.append(call(formant, "Get standard deviation", 2,  start, end, "Hertz"))
-            f3_std.append(call(formant, "Get standard deviation", 3, start, end, "Hertz"))
-            f1_median.append(call(formant, "Get quantile", 1, start, end, "Hertz", 0.50))
-            f2_median.append(call(formant, "Get quantile", 2,  start, end, "Hertz", 0.50))
-            f3_median.append(call(formant, "Get quantile", 3, start, end, "Hertz", 0.50))
-            f1_max.append(call(formant, "Get maximum", 1, start, end, "Hertz", "parabolic"))
-            f2_max.append(call(formant, "Get maximum", 2,  start, end, "Hertz", "parabolic"))
-            f3_max.append(call(formant, "Get maximum", 3, start, end, "Hertz", "parabolic"))
-            f1_min.append(call(formant, "Get minimum", 1, start, end, "Hertz", "parabolic"))
-            f2_min.append(call(formant, "Get minimum", 2,  start, end, "Hertz", "parabolic"))
-            f3_min.append(call(formant, "Get minimum", 3, start, end, "Hertz", "parabolic"))
+
+            f1_mean = call(formant, "Get mean", 1, start_central, end_central, "Hertz")
+            f2_mean = call(formant, "Get mean", 2,  start_central, end_central, "Hertz")
+            f3_mean = call(formant, "Get mean", 3, start_central, end_central, "Hertz")
+            f1_std = call(formant, "Get standard deviation", 1, start_central, end_central, "Hertz")
+            f2_std = call(formant, "Get standard deviation", 2,  start_central, end_central, "Hertz")
+            f3_std = call(formant, "Get standard deviation", 3, start_central, end_central, "Hertz")
+            f1_median = call(formant, "Get quantile", 1, start_central, end_central, "Hertz", 0.50)
+            f2_median = call(formant, "Get quantile", 2, start_central, end_central, "Hertz", 0.50)
+            f3_median = call(formant, "Get quantile", 3, start_central, end_central, "Hertz", 0.50)
+            f1_max = call(formant, "Get maximum", 1, start_central, end_central, "Hertz", "parabolic")
+            f2_max = call(formant, "Get maximum", 2, start_central, end_central, "Hertz", "parabolic")
+            f3_max = call(formant, "Get maximum", 3, start_central, end_central, "Hertz", "parabolic")
+            f1_min = call(formant, "Get minimum", 1, start_central, end_central, "Hertz", "parabolic")
+            f2_min = call(formant, "Get minimum", 2, start_central, end_central, "Hertz", "parabolic")
+            f3_min = call(formant, "Get minimum", 3, start_central, end_central, "Hertz", "parabolic")
 
             # MFCC features
-            audio, sr = librosa.load(wav_file, sr=None)
-            y = audio[int(start*sr):int(end*sr)]
-            pre_emphasis = 0.97
-            y_preemphasized = np.append(y[0], y[1:] - pre_emphasis * y[:-1])
-            y_preemphasized *= np.hamming(len(y_preemphasized)) 
+            mfccs_sentence = call(snd_vowel, "To MFCC", 12, 0.015, 0.005, 100, 100, 0.0)
+            mfccs_array =  mfccs_sentence.to_array()  
+            mfccs_delta = np.diff(mfccs_array, axis=1)
+            mfccs_delta_delta = np.diff(mfccs_delta, axis=1)
 
-            NFFT = 256
-            mag = np.absolute(np.fft.rfft(y_preemphasized, NFFT)) 
-            pow = ((1.0 / NFFT) * ((mag) ** 2))  # Power Spectrum
-            
-            nfilt = 40
-            low_freq = 0
-            high_freq = sr / 2
-            low_mel = 1125 * np.log(1 + low_freq / 700)  # Convert Hz to Mel
-            high_mel = 1125 * np.log(1 + high_freq / 700)
-            mel_points = np.linspace(low_mel, high_mel, nfilt + 2)  # Equally spaced in Mel scale
-            hz_points = 700 * (np.exp(mel_points / 2595) - 1)  # Convert Mel to Hz
-            bin = np.floor((NFFT + 1) * hz_points / sr).astype(int)  # Convert to bin numbers
+            mfcc_mean = np.mean(mfccs_array, axis=1)
+            mfcc_std = np.std(mfccs_array, axis=1)
+            mfccs_delta_mean = np.mean(mfccs_delta, axis=1)
+            mfccs_delta_std = np.std(mfccs_delta, axis=1)
+            mfccs_delta_delta_mean = np.mean(mfccs_delta_delta, axis=1)
+            mfccs_delta_delta_std = np.std(mfccs_delta_delta, axis=1)
 
-            fbank = np.zeros((nfilt, int(np.floor(NFFT / 2 + 1))))
-            for m in range(1, nfilt + 1):
-                f_m_minus = int(bin[m - 1])   # left
-                f_m = int(bin[m])             # center
-                f_m_plus = int(bin[m + 1])    # right
-
-                for k in range(f_m_minus, f_m):
-                    fbank[m - 1, k] = (k - bin[m - 1]) / (bin[m] - bin[m - 1])
-                for k in range(f_m, f_m_plus):
-                    fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
-
-            mel_spec = np.dot(pow, fbank.T)
-            mel_spec = np.where(mel_spec == 0, np.finfo(float).eps, mel_spec)  # Numerical stability
-            log_mel_spec = np.log(mel_spec)
-
-            mfcc = dct(log_mel_spec)[:12]
-
-            low_energy = np.log(np.sum(pow) if np.sum(pow) > 0 else np.finfo(float).eps)
-            mfcc_0.append(mfcc[0])
-            mfcc_1.append(mfcc[1])
-            mfcc_2.append(mfcc[2])
-            mfcc_3.append(mfcc[3])
-            mfcc_4.append(mfcc[4])
-            mfcc_5.append(mfcc[5])
-            mfcc_6.append(mfcc[6])
-            mfcc_7.append(mfcc[7])
-            mfcc_8.append(mfcc[8])
-            mfcc_9.append(mfcc[9])
-            mfcc_10.append(mfcc[10])
-            mfcc_11.append(mfcc[11])
-            mfcc_12.append(low_energy)
-
-            # # Slope of the second formant (Hz/sec) (https://doi.org/10.1121/1.5099163)
-            # '''
-            # "The actual slope 
-            # computations were determined by a rule that defined onset 
-            # and offset of the transitional segment. The onset of the segment was defined as the first point in time from which 
-            # a 20 ms increment was accompanied by at least a 20-Hz change; 
-            # the offset of the segment was defined as a succeeding point in 
-            # time from which a 20-ms increment did not have a corresponding 20-Hz or greater change"
-            # '''
-
-            # sampling_rate = 8000  # Hz
-            # time_step = 20 / 1000  # 20 ms in seconds
-            # threshold_hz = 20
-            # times = np.arange(start, end, 1/sampling_rate)
-            # f2_values = np.array([formant.get_value_at_time(2, t) for t in times])
-
-            # valid_idx = ~np.isnan(f2_values)
-            # times, f2_values = times[valid_idx], f2_values[valid_idx]
-
-            # onset, offset = None, None
-            # for i in range(len(f2_values)):
-            #     future_idx = int(i+time_step*sampling_rate)
-            #     if future_idx < len(f2_values) and abs(f2_values[future_idx] - f2_values[i]) >= threshold_hz:
-            #         onset = i
-            #         break
-            
-            # if onset is not None:
-            #     for j in range(onset, len(f2_values)):
-            #         future_idx = int(j+time_step*sampling_rate)
-            #         if future_idx >= len(f2_values) or abs(f2_values[future_idx] - f2_values[j]) < threshold_hz:
-            #             offset = j
-            #             break
-            
-            # if onset != offset:
-            #     slope = (f2_values[offset] - f2_values[onset]) / (times[offset] - times[onset])
-            # else:
-            #     slope = None
-            
-            # f2_slope.append(slope)
-            
-            # Save all the features in an excel file
-            features = pd.DataFrame({
-                'subjid': name,
-                'duration': duration,
+            result.append({
+                'name': name,
                 'task': task,
                 'category': cat,
                 'sex': gender,
-                'f0_mean': f0_mean,
-                'f0_std': f0_std,
-                'f0_min': f0_min,
-                'f0_max': f0_max,
-                'f0_median': f0_median,
-                'f0_25': f0_25,
-                'f0_75': f0_75,
-                'jitter_local': jitter_local,
-                'jitter_local_absolute': jitter_local_absolute,
-                'jitter_rap': jitter_rap,
-                'jitter_ppq5': jitter_ppq5,
-                'jitter_ddp': jitter_ddp,
-                'shimmer_local': shimmer_local,
-                'shimmer_local_dB': shimmer_local_dB,
-                'shimmer_apq3': shimmer_apq3,
-                'shimmer_apq5': shimmer_apq5,
-                'shimmer_apq11': shimmer_apq11,
-                'shimmer_dda': shimmer_dda,
-                'hnr_mean': hnr_mean,
-                'hnr_std': hnr_std,
-                'hnr_min': hnr_min,
-                'hnr_max': hnr_max,
+                'duration': duration,
+                'f0 mean': f0_mean,
+                'f0 std': f0_std,
+                'f0 max': f0_max,
+                'f0 min': f0_min,
+                'f0 median': f0_median,
+                'f0 25': f0_25,
+                'f0 75': f0_75,
+                'jitter local': jitter_local,
+                'jitter local absolute': jitter_local_absolute,
+                'jitter rap': jitter_rap,
+                'jitter ppq5': jitter_ppq5,
+                'jitter ddp': jitter_ddp,
+                'shimmer local': shimmer_local,
+                'shimmer local dB': shimmer_local_dB,
+                'shimmer apq3': shimmer_apq3,
+                'shimmer apq5': shimmer_apq5,
+                'shimmer apq11': shimmer_apq11,
+                'shimmer dda': shimmer_dda,
+                'hnr mean': hnr_mean,
+                'hnr std': hnr_std,
+                'hnr min': hnr_min,
+                'hnr max': hnr_max,
                 'cpp': cpp,
                 'cp': cp,
-                'f1_mean': f1_mean,
-                'f2_mean': f2_mean,
-                'f3_mean': f3_mean,
-                'f1_std': f1_std,
-                'f2_std': f2_std,
-                'f3_std': f3_std,
-                'f1_median': f1_median,
-                'f2_median': f2_median,
-                'f3_median': f3_median,
-                'f1_max': f1_max,
-                'f2_max': f2_max,
-                'f3_max': f3_max,
-                'f1_min': f1_min,
-                'f2_min': f2_min,
-                'f3_min': f3_min,
-                # 'f2_slope': f2_slope
-                'mfcc_0': mfcc_0,
-                'mfcc_1': mfcc_1,
-                'mfcc_2': mfcc_2,
-                'mfcc_3': mfcc_3,
-                'mfcc_4': mfcc_4,
-                'mfcc_5': mfcc_5,
-                'mfcc_6': mfcc_6,
-                'mfcc_7': mfcc_7,
-                'mfcc_8': mfcc_8,
-                'mfcc_9': mfcc_9,
-                'mfcc_10': mfcc_10,
-                'mfcc_11': mfcc_11,
-                'mfcc_12': mfcc_12
+                'f1 mean': f1_mean,
+                'f1 std': f1_std,
+                'f1 min': f1_min,
+                'f1 max': f1_max,
+                'f1 median': f1_median,
+                'f2 mean': f2_mean,
+                'f2 std': f2_std,
+                'f2 min': f2_min,
+                'f2 max': f2_max,
+                'f2 median': f2_median,
+                'f3 mean': f3_mean,
+                'f3 std': f3_std,
+                'f3 min': f3_min,
+                'f3 max': f3_max,
+                'f3 median': f3_median,
+                'mfcc0 mean': mfcc_mean[0],
+                'mfcc0 std': mfcc_std[0],
+                'mfcc0 delta mean': mfccs_delta_mean[0],
+                'mfcc0 delta std': mfccs_delta_std[0],
+                'mfcc0 delta delta mean': mfccs_delta_delta_mean[0],
+                'mfcc0 delta delta std': mfccs_delta_delta_std[0],
+                'mfcc1 mean': mfcc_mean[1],
+                'mfcc1 std': mfcc_std[1],
+                'mfcc1 delta mean': mfccs_delta_mean[1],
+                'mfcc1 delta std': mfccs_delta_std[1],
+                'mfcc1 delta delta mean': mfccs_delta_delta_mean[1],
+                'mfcc1 delta delta std': mfccs_delta_delta_std[1],
+                'mfcc2 mean': mfcc_mean[2],
+                'mfcc2 std': mfcc_std[2],
+                'mfcc2 delta mean': mfccs_delta_mean[2],
+                'mfcc2 delta std': mfccs_delta_std[2],
+                'mfcc2 delta delta mean': mfccs_delta_delta_mean[2],
+                'mfcc2 delta delta std': mfccs_delta_delta_std[2],
+                'mfcc3 mean': mfcc_mean[3],
+                'mfcc3 std': mfcc_std[3],
+                'mfcc3 delta mean': mfccs_delta_mean[3],
+                'mfcc3 delta std': mfccs_delta_std[3],
+                'mfcc3 delta delta mean': mfccs_delta_delta_mean[3],
+                'mfcc3 delta delta std': mfccs_delta_delta_std[3],
+                'mfcc4 mean': mfcc_mean[4],
+                'mfcc4 std': mfcc_std[4],
+                'mfcc4 delta mean': mfccs_delta_mean[4],
+                'mfcc4 delta std': mfccs_delta_std[4],
+                'mfcc4 delta delta mean': mfccs_delta_delta_mean[4],
+                'mfcc4 delta delta std': mfccs_delta_delta_std[4],
+                'mfcc5 mean': mfcc_mean[5],
+                'mfcc5 std': mfcc_std[5],
+                'mfcc5 delta mean': mfccs_delta_mean[5],
+                'mfcc5 delta std': mfccs_delta_std[5],
+                'mfcc5 delta delta mean': mfccs_delta_delta_mean[5],
+                'mfcc5 delta delta std': mfccs_delta_delta_std[5],
+                'mfcc6 mean': mfcc_mean[6],
+                'mfcc6 std': mfcc_std[6],
+                'mfcc6 delta mean': mfccs_delta_mean[6],
+                'mfcc6 delta std': mfccs_delta_std[6],
+                'mfcc6 delta delta mean': mfccs_delta_delta_mean[6],
+                'mfcc6 delta delta std': mfccs_delta_delta_std[6],
+                'mfcc7 mean': mfcc_mean[7],
+                'mfcc7 std': mfcc_std[7],
+                'mfcc7 delta mean': mfccs_delta_mean[7],
+                'mfcc7 delta std': mfccs_delta_std[7],
+                'mfcc7 delta delta mean': mfccs_delta_delta_mean[7],
+                'mfcc7 delta delta std': mfccs_delta_delta_std[7],
+                'mfcc8 mean': mfcc_mean[8],
+                'mfcc8 std': mfcc_std[8],
+                'mfcc8 delta mean': mfccs_delta_mean[8],
+                'mfcc8 delta std': mfccs_delta_std[8],
+                'mfcc8 delta delta mean': mfccs_delta_delta_mean[8],
+                'mfcc8 delta delta std': mfccs_delta_delta_std[8],
+                'mfcc9 mean': mfcc_mean[9],
+                'mfcc9 std': mfcc_std[9],
+                'mfcc9 delta mean': mfccs_delta_mean[9],
+                'mfcc9 delta std': mfccs_delta_std[9],
+                'mfcc9 delta delta mean': mfccs_delta_delta_mean[9],
+                'mfcc9 delta delta std': mfccs_delta_delta_std[9],
+                'mfcc10 mean': mfcc_mean[10],
+                'mfcc10 std': mfcc_std[10],
+                'mfcc10 delta mean': mfccs_delta_mean[10],
+                'mfcc10 delta std': mfccs_delta_std[10],
+                'mfcc10 delta delta mean': mfccs_delta_delta_mean[10],
+                'mfcc10 delta delta std': mfccs_delta_delta_std[10],
+                'mfcc11 mean': mfcc_mean[10],
+                'mfcc11 std': mfcc_std[10],
+                'mfcc11 delta mean': mfccs_delta_mean[10],
+                'mfcc11 delta std': mfccs_delta_std[10],
+                'mfcc11 delta delta mean': mfccs_delta_delta_mean[10],
+                'mfcc11 delta delta std': mfccs_delta_delta_std[10],
+                'mfcc12 mean': mfcc_mean[11],
+                'mfcc12 std': mfcc_std[11],
+                'mfcc12 delta mean': mfccs_delta_mean[11],
+                'mfcc12 delta std': mfccs_delta_std[11],
+                'mfcc12 delta delta mean': mfccs_delta_delta_mean[11],
+                'mfcc12 delta delta std': mfccs_delta_delta_std[11],
             })
 
-
-            features.to_excel(os.path.join(result_path, 'phonation_features_fix.xlsx'), index=False)
-
-    
-     
-
-
-
-
+            result_df = pd.DataFrame(result)
+            result_df.to_excel(os.path.join(feature_path,'vowel_features.xlsx'), index=False)
