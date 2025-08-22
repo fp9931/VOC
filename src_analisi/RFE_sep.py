@@ -163,6 +163,7 @@ def main_classification(df, y, score, task, name_dataset):
         out_cv = StratifiedShuffleSplit(n_splits=5, random_state=42)
 
     for fold_idx, (train_idx, test_idx) in enumerate(out_cv.split(X, y)):
+        print(test_idx)
         X_train, y_train = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
         print(f"Fold {fold_idx}:")
@@ -339,7 +340,7 @@ def main_classification(df, y, score, task, name_dataset):
                 results_classification['Sensitivity'].append(sensitivity)
 
                 results_df = pd.DataFrame(results_classification)
-                results_df.to_excel(os.path.join(results_path, 'new_results_classification_sep.xlsx'), index=False)
+                # results_df.to_excel(os.path.join(results_path, 'new_results_classification_sep.xlsx'), index=False)
 
             else:
                 train_predictions = final_model.predict(X_train_selected)
@@ -375,7 +376,7 @@ def main_classification(df, y, score, task, name_dataset):
                 results_regression['R2 test rounded'].append(test_r2_round)
 
                 results_df = pd.DataFrame(results_regression)
-                results_df.to_excel(os.path.join(results_path, 'new_results_regression_sep.xlsx'), index=False)
+                # results_df.to_excel(os.path.join(results_path, 'new_results_regression_sep.xlsx'), index=False)
 
 
 # Main
@@ -386,11 +387,11 @@ if __name__ == "__main__":
     results_path = os.path.join(general_path, 'Results')
 
     # Load the cleaned dataframes
-    df_complete = pd.read_excel(os.path.join(features_path, 'New/complete_clean.xlsx'))
-    df_syllable = pd.read_excel(os.path.join(features_path, 'New/syllables_clean.xlsx'))
-    df_vowels = pd.read_excel(os.path.join(features_path, 'New/vowels_clean.xlsx'))
+    df_complete = pd.read_excel(os.path.join(features_path, 'complete_clean.xlsx'))
+    df_syllable = pd.read_excel(os.path.join(features_path, 'syllables_clean.xlsx'))
+    df_vowels = pd.read_excel(os.path.join(features_path, 'vowels_clean.xlsx'))
 
-    columns_to_drop_complete = ['name', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 
+    columns_to_drop_complete = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 
                         # 'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
                         # 'SML11_k', 'SML12_k', 'SML13_k', 'SML21_k', 'SML22_k', 'SML23_k', 'SML31_k', 'SML32_k', 'SML33_k', 'SML41_k', 'SML42_k', 'SML43_k', 'x2D_DCT1_k', 'x2D_DCT2_k', 'x2D_DCT3_k', 'x2D_DCT4_k', 'x2D_DCT5_k', 'x2D_DCT6_k', 'x2D_DCT7_k', 'x2D_DCT8_k', 'x2D_DCT9_k',
                         # 'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p', 
@@ -400,7 +401,7 @@ if __name__ == "__main__":
                         ]
     
     columns_to_drop_syllable = columns_to_drop_complete
-    columns_to_drop_vowels = ['name', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore',
+    columns_to_drop_vowels = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore',
                             #   'mfcc_0_a', 'mfcc_1_a', 'mfcc_2_a', 'mfcc_3_a', 'mfcc_4_a', 'mfcc_5_a', 'mfcc_6_a', 'mfcc_7_a', 'mfcc_8_a', 'mfcc_9_a', 'mfcc_10_a', 'mfcc_11_a', 'mfcc_12_a',
                             #   'mfcc_0_e', 'mfcc_1_e', 'mfcc_2_e', 'mfcc_3_e', 'mfcc_4_e', 'mfcc_5_e', 'mfcc_6_e', 'mfcc_7_e', 'mfcc_8_e', 'mfcc_9_e', 'mfcc_10_e', 'mfcc_11_e', 'mfcc_12_e',
                             #   'mfcc_0_i', 'mfcc_1_i', 'mfcc_2_i', 'mfcc_3_i', 'mfcc_4_i', 'mfcc_5_i', 'mfcc_6_i', 'mfcc_7_i', 'mfcc_8_i', 'mfcc_9_i', 'mfcc_10_i', 'mfcc_11_i', 'mfcc_12_i',
@@ -421,7 +422,7 @@ if __name__ == "__main__":
     y_swallowing = als_df_vowels['ALSFRS-R_SwallowingSubscore'].values
     y_bulbar = als_df_vowels['PUMNS_BulbarSubscore'].values
 
-    id = als_df_vowels['name'].values
+    id = als_df_vowels['subjid'].values
 
     # Compute chance level
     chance_level_speech = max(Counter(y_speech).values()) / len(y_speech)
