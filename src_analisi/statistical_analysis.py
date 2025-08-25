@@ -1,12 +1,10 @@
 import os
 import pandas as pd
 import numpy as np
-from scipy.stats import shapiro, iqr, ttest_ind, mannwhitneyu, pearsonr, spearmanr, f_oneway, kruskal
-import scipy.stats as ss
-import statsmodels.api as sa
-import statsmodels.formula.api as sfa
-import scikit_posthocs as sp
+import scipy as sp
+from scipy.stats import shapiro, iqr, ttest_ind, mannwhitneyu, f_oneway, kruskal
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
+from scikit_posthocs import posthoc_dunn
 
 def statistical_analysis (df, y, score):
 
@@ -133,6 +131,7 @@ def statistical_analysis (df, y, score):
                                                                  np.repeat(2, len(values_2)),
                                                                  np.repeat(3, len(values_3)),
                                                                  np.repeat(4, len(values_4))]))
+                    
                     results["p-value 0 vs. 1"].append(posthoc.pvalues[0])
                     results["p-value 0 vs. 2"].append(posthoc.pvalues[1])
                     results["p-value 0 vs. 3"].append(posthoc.pvalues[2])
@@ -144,22 +143,26 @@ def statistical_analysis (df, y, score):
                     results["p-value 2 vs. 4"].append(posthoc.pvalues[8])
                     results["p-value 3 vs. 4"].append(posthoc.pvalues[9])
                 else:
-                    # posthoc = sp.posthoc_dunn(np.concatenate([values_0, values_1, values_2, values_3, values_4]),
-                    #                              np.concatenate([np.repeat(0, len(values_0)),
-                    #                                              np.repeat(1, len(values_1)),
-                    #                                              np.repeat(2, len(values_2)),
-                    #                                              np.repeat(3, len(values_3)),
-                    #                                              np.repeat(4, len(values_4))]))
-                    results["p-value 0 vs. 1"].append(posthoc.pvalues[0])
-                    results["p-value 0 vs. 2"].append(posthoc.pvalues[1])
-                    results["p-value 0 vs. 3"].append(posthoc.pvalues[2])
-                    results["p-value 0 vs. 4"].append(posthoc.pvalues[3])
-                    results["p-value 1 vs. 2"].append(posthoc.pvalues[4])
-                    results["p-value 1 vs. 3"].append(posthoc.pvalues[5])
-                    results["p-value 1 vs. 4"].append(posthoc.pvalues[6])
-                    results["p-value 2 vs. 3"].append(posthoc.pvalues[7])
-                    results["p-value 2 vs. 4"].append(posthoc.pvalues[8])
-                    results["p-value 3 vs. 4"].append(posthoc.pvalues[9])
+                    groups = np.concatenate([
+                        np.repeat(0, len(values_0)),
+                        np.repeat(1, len(values_1)),
+                        np.repeat(2, len(values_2)),
+                        np.repeat(3, len(values_3)),
+                        np.repeat(4, len(values_4))
+                    ])
+                    data = np.concatenate([values_0, values_1, values_2, values_3, values_4])
+                    df_data = pd.DataFrame({'value': data, 'group': groups})
+                    posthoc = posthoc_dunn(df_data, val_col='value', group_col='group', p_adjust='bonferroni')
+                    results["p-value 0 vs. 1"].append(posthoc.loc[0, 1])
+                    results["p-value 0 vs. 2"].append(posthoc.loc[0, 2])
+                    results["p-value 0 vs. 3"].append(posthoc.loc[0, 3])
+                    results["p-value 0 vs. 4"].append(posthoc.loc[0, 4])
+                    results["p-value 1 vs. 2"].append(posthoc.loc[1, 2])
+                    results["p-value 1 vs. 3"].append(posthoc.loc[1, 3])
+                    results["p-value 1 vs. 4"].append(posthoc.loc[1, 4])
+                    results["p-value 2 vs. 3"].append(posthoc.loc[2, 3])
+                    results["p-value 2 vs. 4"].append(posthoc.loc[2, 4])
+                    results["p-value 3 vs. 4"].append(posthoc.loc[3, 4])
 
             else:
                 results["p-value 0 vs. 1"].append(None)
@@ -174,20 +177,13 @@ def statistical_analysis (df, y, score):
                 results["p-value 3 vs. 4"].append(None)
 
 general_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-features_path = os.path.join(general_path, 'Features')
-results_path = os.path.join(general_path, 'Results')
+features_path = os.path.join(general_path, 'Features/Old')
+results_path = os.path.join(general_path, 'Results/First test')
 
 # Load the cleaned dataframes
 df_complete = pd.read_excel(os.path.join(features_path, 'complete_clean.xlsx'))
 
-columns_to_drop_complete = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore', 
-                    'SML11_t', 'SML12_t', 'SML13_t', 'SML21_t', 'SML22_t', 'SML23_t', 'SML31_t', 'SML32_t', 'SML33_t', 'SML41_t', 'SML42_t', 'SML43_t', 'x2D_DCT1_t', 'x2D_DCT2_t', 'x2D_DCT3_t', 'x2D_DCT4_t', 'x2D_DCT5_t', 'x2D_DCT6_t', 'x2D_DCT7_t', 'x2D_DCT8_t', 'x2D_DCT9_t',
-                    'SML11_k', 'SML12_k', 'SML13_k', 'SML21_k', 'SML22_k', 'SML23_k', 'SML31_k', 'SML32_k', 'SML33_k', 'SML41_k', 'SML42_k', 'SML43_k', 'x2D_DCT1_k', 'x2D_DCT2_k', 'x2D_DCT3_k', 'x2D_DCT4_k', 'x2D_DCT5_k', 'x2D_DCT6_k', 'x2D_DCT7_k', 'x2D_DCT8_k', 'x2D_DCT9_k',
-                    'SML11_p', 'SML12_p', 'SML13_p', 'SML21_p', 'SML22_p', 'SML23_p', 'SML31_p', 'SML32_p', 'SML33_p', 'SML41_p', 'SML42_p', 'SML43_p', 'x2D_DCT1_p', 'x2D_DCT2_p', 'x2D_DCT3_p', 'x2D_DCT4_p', 'x2D_DCT5_p', 'x2D_DCT6_p', 'x2D_DCT7_p', 'x2D_DCT8_p', 'x2D_DCT9_p', 
-                    # 'mfcc_0_t', 'mfcc_1_t', 'mfcc_2_t', 'mfcc_3_t', 'mfcc_4_t', 'mfcc_5_t', 'mfcc_6_t', 'mfcc_7_t', 'mfcc_8_t', 'mfcc_9_t', 'mfcc_10_t', 'mfcc_11_t',
-                    # 'mfcc_0_k', 'mfcc_1_k', 'mfcc_2_k', 'mfcc_3_k', 'mfcc_4_k', 'mfcc_5_k', 'mfcc_6_k', 'mfcc_7_k', 'mfcc_8_k', 'mfcc_9_k', 'mfcc_10_k', 'mfcc_11_k',
-                    # 'mfcc_0_p', 'mfcc_1_p', 'mfcc_2_p', 'mfcc_3_p', 'mfcc_4_p', 'mfcc_5_p', 'mfcc_6_p', 'mfcc_7_p', 'mfcc_8_p', 'mfcc_9_p', 'mfcc_10_p', 'mfcc_11_p'
-                    ]
+columns_to_drop_complete = ['subjid', 'category', 'sex', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore']
 
 # Filter ALS patients and drop unnecessary columns
 als_df_complete = df_complete[df_complete['category'] == 'ALS'].reset_index(drop=True)
@@ -280,4 +276,4 @@ statistical_analysis(als_df_complete, y_bulbar, 'Bulbar')
 
 # Save
 results_df = pd.DataFrame(results)
-results_df.to_csv("als_statistical_analysis_results.csv", index=False)
+results_df.to_excel(os.path.join(results_path, "statistical_analysis.xlsx"), index=False)

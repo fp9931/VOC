@@ -20,7 +20,7 @@ catergory = info['Category'].values
 timings_path = os.path.join(general_path, 'timings')
 
 results = []
-
+count = 0
 for folder in os.listdir(data_path):
     if folder.startswith('rhythm'):
         syllable_path = os.path.join(data_path, folder)
@@ -31,6 +31,7 @@ for folder in os.listdir(data_path):
 
             if file.startswith('C'):
                 continue
+
             timings = os.path.join(timings_syllable_path, file[:5]+'.xlsx')
             timings_table = pd.read_excel(timings)
             start_values = timings_table['Start'].values
@@ -53,6 +54,12 @@ for folder in os.listdir(data_path):
             pitch = call(snd, "To Pitch (cc)", 0.0, min_freq, 15, False, 0.03, 0.45, 0.01, 0.35, 0.14, max_freq)
 
             for t in range(len(start_values)):
+
+                if count < 4910:
+                    count += 1
+                    continue
+            
+                count += 1
 
                 start = float(start_values[t])
                 end = float(end_values[t])
@@ -262,5 +269,5 @@ for folder in os.listdir(data_path):
                     'mfcc12 delta delta std': mfccs_delta_delta_std[11],
                 })
                 results_df = pd.DataFrame(results)
-                results_df.to_excel(os.path.join(feature_path, 'syllabels_features.xlsx'), index=False)
+                results_df.to_excel(os.path.join(feature_path, 'syllabels_features_fixed.xlsx'), index=False)
 
