@@ -177,8 +177,8 @@ def statistical_analysis (df, y, score):
                 results["p-value 3 vs. 4"].append(None)
 
 general_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-features_path = os.path.join(general_path, 'Features/Old')
-results_path = os.path.join(general_path, 'Results/First test')
+features_path = os.path.join(general_path, 'Features/New')
+results_path = os.path.join(general_path, 'Results/Second test')
 
 # Load the cleaned dataframes
 df_complete = pd.read_excel(os.path.join(features_path, 'complete_clean.xlsx'))

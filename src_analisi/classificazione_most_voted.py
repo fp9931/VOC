@@ -157,10 +157,8 @@ def main_regression(df, y, score, name_dataset):
 
         # Seleziona solo le righe nel results_df che nella colonna 'Target' hanno il valore uguale a score, dove target è ['ALSFRS-R_SpeechSubscore']
         df_results_filtered = df_results[df_results['Target'] == f"['{score}']"]
-        print(len(df_results_filtered))
         # Estrai solo le righe con dataset uguale a name_dataset
         df_results_filtered = df_results_filtered[df_results_filtered['Dataset'] == name_dataset]
-        print(len(df_results_filtered))
 
         X_train, y_train = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
