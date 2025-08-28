@@ -1,0 +1,10 @@
+CLASSIFICAZIONE
+
+1. SEP --> miglior modello in ogni fold selezionato con validation score --> 1 valore per ogni tecnica e ogni score (SEP 1)
+2. LOO --> miglior modello in ogni fold selezionato con validation score --> 1 valore per ogni tecnica e ogni score (LOO 1)
+
+3. SEP --> selezionato il miglior modello in generale tra le varie tecniche --> 1 valore per ogni score (SEP 2)
+4. LOO --> selezionato il miglior modello in generale tra le varie tecniche --> 1 valore per ogni score (SEP 2)
+
+7. SEP --> feature selection con MISTA --> miglior modello in ogni fold selezionato con validation score --> 1 valore per ogni tecnica e ogni score (SEP 3)
+8. SEP --> feature seleciton con MISTA --> selezionato il miglior modello in generale tra le varie tecniche --> 1 valore per ogni score (SEP 4)
