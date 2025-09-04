@@ -62,6 +62,9 @@ def feature_selection(X_df, X_train, y_train, X_test, task, score, technique):
         selected_mask = selector.fit(X_train_df, y_train_df).support_
         selected_features = [X_train_df.columns[i] for i in range(len(X_train_df.columns)) if selected_mask[i]]
 
+    selected_features.append("Onset")
+    selected_features.append("Age")
+    selected_features.append("Disease duration")
     selected_indices = [X_df.columns.get_loc(col) for col in selected_features]
     X_train_selected = X_train[:, selected_indices]
     X_test_selected = X_test[:, selected_indices]
@@ -160,6 +163,7 @@ def main_classification(df, y, score, task, name_dataset):
 
     for fold_idx, (train_idx, test_idx) in enumerate(out_cv.split(X, y)):
         print(test_idx)
+        
         X_train, y_train = X[train_idx], y[train_idx]
         X_test, y_test = X[test_idx], y[test_idx]
         print(f"Fold {fold_idx}:")

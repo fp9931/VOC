@@ -16,7 +16,7 @@ results_path = os.path.join(general_path, 'Results')
 # for score in scores:
 #     for dataset in datasets:
 #         # Seleziona tre righe consecutivi
-#         subset = results[(results['Target'] == score) & (results['Dataset'] == dataset)]
+        # subset = results[(results['Target'] == score) & (results['Dataset'] == dataset)]
 #         for i in range(0, len(subset), 3):
 
 #             triplet = subset.iloc[i:i+3]
