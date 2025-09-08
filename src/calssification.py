@@ -3,11 +3,13 @@ import numpy as np
 import pandas as pd
 import itertools
 from collections import Counter
+import random
 
-from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
+from mrmr import mrmr_classif
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit, GroupKFold
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, recall_score, precision_score, accuracy_score, root_mean_squared_error, root_mean_squared_log_error, r2_score, roc_auc_score
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -17,10 +19,37 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.feature_selection import RFECV, RFE
 from sklearn.linear_model import LogisticRegression, LinearRegression
 
+from shap_figure import shap_analysis
+
+seed = 42
+np.random.seed(seed)
+random.seed(seed)
 
 def remove_columns(df, columns_to_remove):
     df_clean = df.drop(columns=columns_to_remove)
     return df_clean
+
+def fisher_score(X, y):
+    scores = []
+    classes = np.unique(y)
+    n = X.shape[0]
+
+    for i in range(X.shape[1]):
+        feature = X[:, i]
+        overall_mean = np.mean(feature)
+        
+        num = 0
+        denom = 0
+        for c in classes:
+            idx = np.where(y == c)[0]
+            n_c = len(idx)
+            class_mean = np.mean(feature[idx])
+            class_var = np.var(feature[idx])
+            num += n_c * (class_mean - overall_mean) ** 2
+            denom += n_c * class_var
+        score = num / denom if denom != 0 else 0
+        scores.append(score)
+    return np.array(scores)
 
 def feature_selection(X_df, X_train, y_train, X_test, task, score, technique):
     selected_features = []
@@ -46,24 +75,78 @@ def feature_selection(X_df, X_train, y_train, X_test, task, score, technique):
         y_task = pd.Series(y_train, name=score)
         n_features = int(len(X_task_df.columns) * 0.1)
         
+        X_train_df_copy = X_train_df_copy.drop(columns=['Onset', 'Age', 'Disease duration'])
         selector = RFE(estimator=estimator, step=1, n_features_to_select=n_features)
-        selected_mask = selector.fit(X_task_df, y_task).support_
-        selected_features = [X_task_df.columns[i] for i in range(len(X_task_df.columns)) if selected_mask[i]]
+        selected_mask = selector.fit(X_train_df_copy, y_task).support_
+        selected_features = [X_train_df_copy.columns[i] for i in range(len(X_train_df_copy.columns)) if selected_mask[i]]
 
     elif technique == 'Free':
         X_train_df_copy = pd.DataFrame(X_train, columns=X_df.columns)
-        # Remove columns Onset, Age, Disease duration
+
         X_train_df_copy = X_train_df_copy.drop(columns=['Onset', 'Age', 'Disease duration'])
         y_train_df = pd.Series(y_train, name=score)
         selector = RFECV(estimator=estimator, step=1,
-                         cv=StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42),
+                         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=seed),
                          min_features_to_select=5)
         selected_mask = selector.fit(X_train_df_copy, y_train_df).support_
         selected_features = [X_train_df_copy.columns[i] for i in range(len(X_train_df_copy.columns)) if selected_mask[i]]
 
-    selected_features.append("Onset")
-    selected_features.append("Age")
-    selected_features.append("Disease duration")
+    elif technique == '10% mRMR':
+        X_train_df_copy = pd.DataFrame(X_train, columns=X_df.columns)
+        X_train_df_copy = X_train_df_copy.drop(columns=['Onset', 'Age', 'Disease duration'])
+
+        y_task = pd.Series(y_train, name=score)
+        n_features = int(len(X_train_df_copy.columns) * 0.1)
+
+        selected_features = mrmr_classif(X=X_train_df_copy, y=y_task, K=n_features)
+    
+    elif technique == '5 mRMR':
+        X_task_df = pd.DataFrame(X_train, columns=X_df.columns)
+        y_task = pd.Series(y_train, name=score)
+
+        for id_task in task:
+            features = [col for col in X_df.columns if col.endswith(id_task)]
+            X_task = X_task_df[features]
+            y_task = pd.Series(y_train, name=score)
+
+            selected_mask = mrmr_classif(X=X_task, y=y_task, K=5)
+            selected_features.extend(selected_mask)
+
+    elif technique == 'Fisher':
+        best_score = -np.inf
+        best_features = None
+        
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
+        X_train_df_copy = pd.DataFrame(X_train, columns=X_df.columns)
+        X_train_df_copy = X_train_df_copy.drop(columns=['Onset', 'Age', 'Disease duration'])
+        X_train_values = X_train_df_copy.values
+        y_train_df = pd.Series(y_train, name=score)
+
+        for train_idx, val_idx in cv.split(X_train_values, y_train):
+
+            X_tr, y_tr = X_train_values[train_idx], y_train[train_idx]
+            X_val, y_val = X_train_values[val_idx], y_train[val_idx]
+
+            y = LabelEncoder().fit_transform(y_tr)
+            scores = fisher_score(X_tr, y)
+            feature_ranking = np.argsort(scores)[::-1]
+            percentages = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+            for pct in percentages:
+                n_features = int(len(scores) * pct)
+                top_features = feature_ranking[:n_features]
+
+                estimator.fit(X_tr[:, top_features], y_tr)
+                y_pred = estimator.predict(X_val[:, top_features])
+                score = f1_score(y_pred, y_val, average='weighted')
+                if score > best_score:
+                    best_score = score
+                    best_features = top_features
+
+                    selected_features = [X_train_df_copy.columns[i] for i in best_features]
+
+
+    #selected_features.append("Age")
+
     selected_indices = [X_df.columns.get_loc(col) for col in selected_features]
     X_train_selected = X_train[:, selected_indices]
     X_test_selected = X_test[:, selected_indices]
@@ -94,27 +177,17 @@ def main_classification(df, y, score, task, name_dataset):
                 'gamma': [0.0001, 0.001, 0.01, 0.1, 1],
                 'degree': [2, 3, 4],
             }},
-            {"name": "RF", "model": RandomForestClassifier(random_state=42, n_jobs=-1, class_weight='balanced'), "parameters": {
-                'n_estimators': [10, 20, 30, 40, 50, 60, 70, 100, 150, 200, 300],
+            {"name": "RF", "model": RandomForestClassifier(random_state=seed, n_jobs=-1, class_weight='balanced'), "parameters": {
+                'n_estimators': [10, 20, 30, 40, 50, 60, 60, 70, 100, 150],
                 'max_depth': [None, 2, 5, 7, 10, 20, 30],
                 'min_samples_split': [2, 5, 10],
                 'min_samples_leaf': [1, 2, 4],
             }},
-            {"name": "XGB", "model": XGBClassifier(random_state=42, n_jobs=-1), "parameters": {
-                'n_estimators': [10, 20, 30, 40, 50, 100, 200],
+            {"name": "XGB", "model": XGBClassifier(random_state=seed, n_jobs=-1), "parameters": {
+                'n_estimators': [10, 20, 30, 40, 50, 100],
                 'max_depth': [2, 3, 5, 7, 9],
                 'learning_rate': [0.01, 0.1, 0.2, 0.5, 0.7, 1.0],
                 'subsample': [0.1, 0.2, 0.3, 0.5, 0.7, 1.0],
-            }},
-            {"name": "KNN", "model": KNeighborsClassifier(n_jobs=-1), "parameters": {
-                'n_neighbors': [2, 3, 4, 5, 6, 7, 8, 9, 10, 15],
-                'weights': ['uniform', 'distance'],
-                'metric': ['euclidean', 'manhattan', 'minkowski'],
-            }},
-            {"name": "MLP", "model": MLPClassifier(random_state=42, max_iter=1000, early_stopping=True, n_iter_no_change=10), "parameters": {
-                'hidden_layer_sizes': [(64,), (32,), (16,), (8,), (64,32), (32, 16), (16, 8)],
-                'activation': ['relu', 'tanh', 'logistic'],
-                'alpha': [0.0001, 0.001],
             }},
         ]
     else:
@@ -125,39 +198,30 @@ def main_classification(df, y, score, task, name_dataset):
                 'gamma': [0.0001, 0.001, 0.01, 0.1, 1],
                 'degree': [2, 3, 4],
             }},
-            {"name": "RF", "model": RandomForestRegressor(random_state=42, n_jobs=-1), "parameters": {
-                'n_estimators': [10, 20, 30, 40, 50, 60, 70, 100, 150, 200, 300],
+            {"name": "RF", "model": RandomForestRegressor(random_state=seed, n_jobs=-1), "parameters": {
+                'n_estimators': [10, 20, 30, 40, 50, 60, 60, 70, 100, 150, 200, 300],
                 'max_depth': [None, 2, 5, 7, 10, 20, 30],
                 'min_samples_split': [2, 5, 10],
                 'min_samples_leaf': [1, 2, 4],
             }},
-            {"name": "XGB", "model": XGBRegressor(random_state=42, n_jobs=-1), "parameters": {
+            {"name": "XGB", "model": XGBRegressor(random_state=seed, n_jobs=-1), "parameters": {
                 'n_estimators': [10, 20, 30, 40, 50, 100, 200],
                 'max_depth': [2, 3, 5, 7, 9],
                 'learning_rate': [0.01, 0.1, 0.2, 0.5, 0.7, 1.0],
                 'subsample': [0.1, 0.2, 0.3, 0.5, 0.7, 1.0],
             }},
-            {"name": "KNN", "model": KNeighborsRegressor(n_jobs=-1), "parameters": {
-                'n_neighbors': [2, 3, 4, 5, 6, 7, 8, 9, 10, 15],
-                'weights': ['uniform', 'distance'],
-                'metric': ['euclidean', 'manhattan', 'minkowski'],
-            }},
-            {"name": "MLP", "model": MLPRegressor(random_state=42, max_iter=1000, early_stopping=True, n_iter_no_change=10), "parameters": {
-                'hidden_layer_sizes': [(64,), (32,), (16,), (8,), (64,32), (32, 16), (16, 8)],
-                'activation': ['relu', 'tanh', 'logistic'],
-                'alpha': [0.0001, 0.001],
-            }},
         ]
 
-    features_technique = ['5', '10%', 'Free']
+    features_technique = ['5 mRMR', '10% mRMR', '5', '10%', 'Free']
+    model_shuffled = models
 
     # Split the data into training and test sets
     if score != 'PUMNS_BulbarSubscore':
-        inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-        out_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        inner_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
+        out_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     else:
-        inner_cv = StratifiedShuffleSplit(n_splits=5, random_state=42)
-        out_cv = StratifiedShuffleSplit(n_splits=5, random_state=42)
+        inner_cv = GroupKFold(n_splits=5, shuffle=True, random_state=seed)
+        out_cv = GroupKFold(n_splits=5, shuffle=True, random_state=seed)
 
     for fold_idx, (train_idx, test_idx) in enumerate(out_cv.split(X, y)):
         
@@ -173,7 +237,7 @@ def main_classification(df, y, score, task, name_dataset):
         print(f"Test set: {count_normal_test} normal, {count_impaired_test} impaired")
 
         #Impute missing values
-        imputer = IterativeImputer(max_iter=10, random_state=42)
+        imputer = IterativeImputer(max_iter=10, random_state=seed)
         X_train = imputer.fit_transform(X_train)
         X_test = imputer.transform(X_test)
 
@@ -195,27 +259,26 @@ def main_classification(df, y, score, task, name_dataset):
 
         for technique in features_technique:
 
+            if score != 'PUMNS_BulbarSubscore':
+                best_f1_validation = -np.inf
+                best_model = None
+                best_params = None
+                best_name = None
+                best_technique = None
+                best_features_voted = None
+            else:
+                best_rmse_validation = np.inf
+                best_model = None
+                best_params = None
+                best_name = None
+                best_technique = None
+                best_features_voted = None
+
             # Train and evaluate each model
-            for model_info in models:
+            for model_info in model_shuffled:
                 model_name = model_info['name']
                 model_class = model_info['model'].__class__
                 model_parameters = model_info['parameters']
-
-                if score != 'PUMNS_BulbarSubscore':
-                    best_f1_validation = -np.inf
-                    best_roc_validation = -np.inf
-                    best_model = None
-                    best_params = None
-                    best_name = None
-                    best_technique = None
-                    best_features_voted = None
-                else:
-                    best_rmse_validation = np.inf
-                    best_model = None
-                    best_params = None
-                    best_name = None
-                    best_technique = None
-                    best_features_voted = None
 
                 for params in itertools.product(*model_parameters.values()):
                     params = dict(zip(model_parameters.keys(), params))
@@ -378,14 +441,14 @@ if __name__ == "__main__":
 
     # Load the cleaned dataframes
     df_complete = pd.read_excel(os.path.join(features_path, 'Features_complete.xlsx'))
-    df_syllable = pd.read_excel(os.path.join(features_path, 'Features_syllables.xlsx'))
+    df_syllable = pd.read_excel(os.path.join(features_path, 'Features_syllable.xlsx'))
     df_vowels = pd.read_excel(os.path.join(features_path, 'Features_vowels.xlsx'))
 
-    columns_to_drop = ['ID', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore']
+    columns_to_drop = ['subjid', 'sex', 'category', 'ALSFRS-R_SpeechSubscore', 'ALSFRS-R_SwallowingSubscore', 'PUMNS_BulbarSubscore']
 
-    task_complete = ['_A','_E', '_I', '_O', '_U', '_KA', '_PA', '_TA']
-    task_syllable = ['_KA', '_PA', '_TA']
-    task_vowels = ['_A','_E', '_I', '_O', '_U']
+    task_complete = ['_a','_e', '_i', '_o', '_u', '_k', '_p', '_t']
+    task_syllable = ['_k', '_p', '_t']
+    task_vowels = ['_a','_e', '_i', '_o', '_u']
 
     y_speech = df_complete['ALSFRS-R_SpeechSubscore'].values
     y_swallowing = df_syllable['ALSFRS-R_SwallowingSubscore'].values
@@ -446,6 +509,19 @@ if __name__ == "__main__":
         'R2 test rounded': [],
     }
 
+    # # Rimuovere tutte le colonne che iniziano con 'mfcc'
+    # df_complete = df_complete.loc[:, ~df_complete.columns.str.startswith('mfcc')]
+    # df_syllable = df_syllable.loc[:, ~df_syllable.columns.str.startswith('mfcc')]
+    # df_vowels = df_vowels.loc[:, ~df_vowels.columns.str.startswith('mfcc')]
+
+    # Bulbar
+    df = remove_columns(df_complete, columns_to_drop)
+    main_classification(df, y_bulbar, 'PUMNS_BulbarSubscore', task_complete, 'complete')
+    df = remove_columns(df_syllable, columns_to_drop)
+    main_classification(df, y_bulbar, 'PUMNS_BulbarSubscore', task_syllable, 'syllable')
+    df = remove_columns(df_vowels, columns_to_drop)
+    main_classification(df, y_bulbar, 'PUMNS_BulbarSubscore', task_vowels, 'vowels')
+
     # Speech
     df = remove_columns(df_complete, columns_to_drop)
     main_classification(df, y_speech, 'ALSFRS-R_SpeechSubscore', task_complete, 'complete')
@@ -461,11 +537,3 @@ if __name__ == "__main__":
     main_classification(df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_syllable, 'syllable')
     df = remove_columns(df_vowels, columns_to_drop)
     main_classification(df, y_swallowing, 'ALSFRS-R_SwallowingSubscore', task_vowels, 'vowels')
-
-    # Bulbar
-    df = remove_columns(df_complete, columns_to_drop)
-    main_classification(df, y_bulbar, 'PUMNS_BulbarSubscore', task_complete, 'complete')
-    df = remove_columns(df_syllable, columns_to_drop)
-    main_classification(df, y_bulbar, 'PUMNS_BulbarSubscore', task_syllable, 'syllable')
-    df = remove_columns(df_vowels, columns_to_drop)
-    main_classification(df, y_bulbar, 'PUMNS_BulbarSubscore', task_vowels, 'vowels')
